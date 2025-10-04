@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import AdminProtectedRoute from "../../components/AdminProtectedRoute";
+import { AdminAuth } from "../../lib/adminAuth";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,6 +14,8 @@ export default function AdminDashboard() {
   const [user, setUser] = useState<any>(null);
   const [userCount, setUserCount] = useState(0);
   const [productCount, setProductCount] = useState(0);
+  const [orderCount, setOrderCount] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -24,6 +28,7 @@ export default function AdminDashboard() {
         setUser(user);
         await fetchUserCount();
         await fetchProductCount();
+        await fetchOrderStats();
       }
       setLoading(false);
     };
@@ -59,7 +64,42 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchOrderStats = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true });
+      
+      const { data: revenueData, error: revenueError } = await supabase
+        .from('orders')
+        .select('total_amount')
+        .eq('status', 'delivered');
+      
+      if (error) {
+        console.error('Error fetching order count:', error);
+        setOrderCount(0);
+      } else {
+        console.log('Order count:', count);
+        setOrderCount(count || 0);
+      }
+      
+      if (!revenueError && revenueData) {
+        const revenue = revenueData.reduce((sum, order) => sum + parseFloat(order.total_amount), 0);
+        setTotalRevenue(revenue);
+        console.log('Total revenue:', revenue);
+      }
+    } catch (error) {
+      console.error('Error fetching order stats:', error);
+      setOrderCount(0);
+      setTotalRevenue(0);
+    }
+  };
+
   const handleLogout = async () => {
+    const { token } = AdminAuth.getCurrentSession();
+    if (token) {
+      await AdminAuth.destroySession(token);
+    }
     await supabase.auth.signOut();
     router.push("/login");
   };
@@ -67,7 +107,8 @@ export default function AdminDashboard() {
   if (loading || !user) return <div>Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <AdminProtectedRoute>
+      <div className="min-h-screen bg-gray-100">
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -138,7 +179,7 @@ export default function AdminDashboard() {
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Orders</dt>
-                      <dd className="text-lg font-medium text-gray-900">0</dd>
+                      <dd className="text-lg font-medium text-gray-900">{orderCount}</dd>
                     </dl>
                   </div>
                 </div>
@@ -156,7 +197,7 @@ export default function AdminDashboard() {
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Revenue</dt>
-                      <dd className="text-lg font-medium text-gray-900">₵0</dd>
+                      <dd className="text-lg font-medium text-gray-900">₵{totalRevenue.toFixed(2)}</dd>
                     </dl>
                   </div>
                 </div>
@@ -169,7 +210,7 @@ export default function AdminDashboard() {
               <h3 className="text-base sm:text-lg leading-6 font-medium text-gray-900 mb-3 sm:mb-4">
                 Quick Actions
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4">
                 <button 
                   onClick={() => router.push("/admin/manage-users")}
                   className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm sm:text-base"
@@ -200,14 +241,24 @@ export default function AdminDashboard() {
                 >
                   Customers
                 </button>
-                <button className="bg-yellow-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-yellow-700 transition text-sm sm:text-base">
+                <button 
+                  onClick={() => router.push("/admin/orders")}
+                  className="bg-yellow-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-yellow-700 transition text-sm sm:text-base"
+                >
                   View Orders
+                </button>
+                <button 
+                  onClick={() => router.push("/admin/manage-admins")}
+                  className="bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-700 transition text-sm sm:text-base"
+                >
+                  Manage Admins
                 </button>
               </div>
             </div>
           </div>
         </div>
       </main>
-    </div>
+      </div>
+    </AdminProtectedRoute>
   );
 }

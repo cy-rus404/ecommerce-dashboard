@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { EmailService } from "../../../lib/emailService";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,6 +13,12 @@ export default function ViewProducts() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [editingDiscount, setEditingDiscount] = useState<number | null>(null);
+  const [discountData, setDiscountData] = useState({
+    discount_percentage: "",
+    discount_start_date: "",
+    discount_end_date: ""
+  });
   const router = useRouter();
 
   useEffect(() => {
@@ -60,6 +67,13 @@ export default function ViewProducts() {
         alert("Error updating stock");
       } else {
         console.log("Stock updated successfully");
+        
+        // Check if stock is low and send alert
+        if (newStock <= 5) {
+          console.log('Low stock detected, checking for alerts...');
+          EmailService.checkAndSendLowStockAlerts();
+        }
+        
         fetchProducts();
       }
     } catch (error) {
@@ -85,6 +99,62 @@ export default function ViewProducts() {
       }
     } catch (error) {
       console.error("Error deleting product:", error);
+    }
+  };
+
+  const startEditingDiscount = (product: any) => {
+    setEditingDiscount(product.id);
+    setDiscountData({
+      discount_percentage: product.discount_percentage || "",
+      discount_start_date: product.discount_start_date || "",
+      discount_end_date: product.discount_end_date || ""
+    });
+  };
+
+  const updateDiscount = async (productId: number) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({
+          discount_percentage: discountData.discount_percentage ? parseFloat(discountData.discount_percentage) : null,
+          discount_start_date: discountData.discount_start_date || null,
+          discount_end_date: discountData.discount_end_date || null
+        })
+        .eq('id', productId);
+
+      if (error) {
+        console.error("Error updating discount:", error);
+        alert("Error updating discount");
+      } else {
+        console.log("Discount updated successfully");
+        setEditingDiscount(null);
+        fetchProducts();
+      }
+    } catch (error) {
+      console.error("Error updating discount:", error);
+    }
+  };
+
+  const removeDiscount = async (productId: number) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({
+          discount_percentage: null,
+          discount_start_date: null,
+          discount_end_date: null
+        })
+        .eq('id', productId);
+
+      if (error) {
+        console.error("Error removing discount:", error);
+        alert("Error removing discount");
+      } else {
+        console.log("Discount removed successfully");
+        fetchProducts();
+      }
+    } catch (error) {
+      console.error("Error removing discount:", error);
     }
   };
 
@@ -145,16 +215,24 @@ export default function ViewProducts() {
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="px-4 py-4 sm:px-6 border-b flex justify-between items-center">
             <h2 className="text-lg font-medium text-gray-900">Products</h2>
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">All Products</option>
-              <option value="in-stock">In Stock</option>
-              <option value="out-of-stock">Out of Stock</option>
-              <option value="low-stock">Low Stock</option>
-            </select>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => EmailService.checkAndSendLowStockAlerts()}
+                className="px-3 py-1 bg-orange-600 text-white rounded text-sm hover:bg-orange-700"
+              >
+                Send Stock Alerts
+              </button>
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Products</option>
+                <option value="in-stock">In Stock</option>
+                <option value="out-of-stock">Out of Stock</option>
+                <option value="low-stock">Low Stock</option>
+              </select>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -165,6 +243,7 @@ export default function ViewProducts() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Discount</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
@@ -174,12 +253,19 @@ export default function ViewProducts() {
                   <tr key={product.id} className="hover:bg-gray-50">
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        {product.image_url && (
-                          <img
-                            src={product.image_url}
-                            alt={product.name}
-                            className="w-10 h-10 rounded object-cover mr-3"
-                          />
+                        {product.image_urls && product.image_urls.length > 0 && (
+                          <div className="relative mr-3">
+                            <img
+                              src={product.image_urls[0]}
+                              alt={product.name}
+                              className="w-10 h-10 rounded object-cover"
+                            />
+                            {product.image_urls.length > 1 && (
+                              <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                                {product.image_urls.length}
+                              </div>
+                            )}
+                          </div>
                         )}
                         <div>
                           <div className="text-sm font-medium text-gray-900">{product.name}</div>
@@ -191,7 +277,21 @@ export default function ViewProducts() {
                       {product.category}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₵{product.price}
+                      {product.discount_percentage && 
+                       new Date() >= new Date(product.discount_start_date) && 
+                       new Date() <= new Date(product.discount_end_date) ? (
+                        <div>
+                          <span className="line-through text-gray-500">₵{product.price}</span>
+                          <span className="text-red-600 font-bold ml-1">
+                            ₵{(product.price * (1 - product.discount_percentage / 100)).toFixed(2)}
+                          </span>
+                          <span className="text-xs bg-red-100 text-red-800 px-1 py-0.5 rounded ml-1">
+                            {product.discount_percentage}% OFF
+                          </span>
+                        </div>
+                      ) : (
+                        <span>₵{product.price}</span>
+                      )}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <input
@@ -201,6 +301,62 @@ export default function ViewProducts() {
                         className="w-16 p-1 border rounded text-sm"
                         min="0"
                       />
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      {editingDiscount === product.id ? (
+                        <div className="space-y-2">
+                          <input
+                            type="number"
+                            placeholder="%"
+                            value={discountData.discount_percentage}
+                            onChange={(e) => setDiscountData({...discountData, discount_percentage: e.target.value})}
+                            className="w-16 p-1 border rounded text-xs"
+                            min="0"
+                            max="100"
+                          />
+                          <input
+                            type="date"
+                            value={discountData.discount_start_date}
+                            onChange={(e) => setDiscountData({...discountData, discount_start_date: e.target.value})}
+                            className="w-full p-1 border rounded text-xs"
+                          />
+                          <input
+                            type="date"
+                            value={discountData.discount_end_date}
+                            onChange={(e) => setDiscountData({...discountData, discount_end_date: e.target.value})}
+                            className="w-full p-1 border rounded text-xs"
+                          />
+                          <div className="flex space-x-1">
+                            <button
+                              onClick={() => updateDiscount(product.id)}
+                              className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setEditingDiscount(null)}
+                              className="px-2 py-1 bg-gray-600 text-white rounded text-xs hover:bg-gray-700"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          {product.discount_percentage ? (
+                            <div className="text-xs">
+                              <span className="bg-red-100 text-red-800 px-2 py-1 rounded">
+                                {product.discount_percentage}% OFF
+                              </span>
+                              <div className="text-gray-500 mt-1">
+                                {product.discount_start_date} to {product.discount_end_date}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-xs">No discount</span>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -213,10 +369,28 @@ export default function ViewProducts() {
                         {product.stock === 0 ? 'Out of Stock' : product.stock <= 5 ? 'Low Stock' : 'In Stock'}
                       </span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm space-x-2">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm space-x-1">
+                      {editingDiscount !== product.id && (
+                        <>
+                          <button
+                            onClick={() => startEditingDiscount(product)}
+                            className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700"
+                          >
+                            {product.discount_percentage ? 'Edit' : 'Add'} Discount
+                          </button>
+                          {product.discount_percentage && (
+                            <button
+                              onClick={() => removeDiscount(product.id)}
+                              className="px-2 py-1 bg-orange-600 text-white rounded text-xs font-medium hover:bg-orange-700"
+                            >
+                              Remove Discount
+                            </button>
+                          )}
+                        </>
+                      )}
                       <button
                         onClick={() => deleteProduct(product.id)}
-                        className="px-3 py-1 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700"
+                        className="px-2 py-1 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700"
                       >
                         Delete
                       </button>

@@ -48,7 +48,6 @@ export default function Analytics() {
 
       // Calculate analytics from products data
       const totalProducts = products?.length || 0;
-      const totalRevenue = 0; // Real revenue from actual orders (not inventory value)
       
       // Top products by price
       const topProducts = products
@@ -78,9 +77,19 @@ export default function Analytics() {
         status: product.stock > 0 ? 'success' : 'warning'
       })) || [];
 
+      // Fetch real order data
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select('total_amount, status');
+      
+      const totalOrders = ordersData?.length || 0;
+      const actualRevenue = ordersData
+        ?.filter(order => order.status === 'delivered')
+        .reduce((sum, order) => sum + parseFloat(order.total_amount), 0) || 0;
+
       setAnalytics({
-        totalRevenue: 0, // Real revenue from actual sales
-        totalOrders: 0, // Real orders count
+        totalRevenue: actualRevenue,
+        totalOrders,
         totalProducts,
         totalUsers: 1,
         topProducts,

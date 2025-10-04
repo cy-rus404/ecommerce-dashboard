@@ -143,16 +143,39 @@ export default function ProductsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
               <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
-                {product.image_url && (
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    className="w-full h-48 object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = "https://via.placeholder.com/300x200?text=No+Image";
-                    }}
-                  />
-                )}
+                <div className="relative">
+                  {product.image_urls && product.image_urls.length > 0 ? (
+                    <>
+                      <img
+                        src={product.image_urls[0]}
+                        alt={product.name}
+                        className="w-full h-48 object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://via.placeholder.com/300x200?text=No+Image";
+                        }}
+                      />
+                      {product.image_urls.length > 1 && (
+                        <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+                          +{product.image_urls.length - 1} more
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                      <span className="text-gray-400">No Image</span>
+                    </div>
+                  )}
+                  
+                  {/* Discount Badge */}
+                  {product.discount_percentage && 
+                   product.discount_start_date && product.discount_end_date &&
+                   new Date() >= new Date(product.discount_start_date) && 
+                   new Date() <= new Date(product.discount_end_date) && (
+                    <div className="absolute top-2 left-2 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                      -{product.discount_percentage}% OFF
+                    </div>
+                  )}
+                </div>
                 
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-2">
@@ -169,9 +192,30 @@ export default function ProductsPage() {
                   </p>
                   
                   <div className="flex justify-between items-center mb-3">
-                    <span className="text-2xl font-bold text-blue-600">
-                      ₵{product.price}
-                    </span>
+                    <div className="flex flex-col">
+                      {product.discount_percentage && 
+                       product.discount_start_date && product.discount_end_date &&
+                       new Date() >= new Date(product.discount_start_date) && 
+                       new Date() <= new Date(product.discount_end_date) ? (
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-lg text-gray-500 line-through decoration-2 decoration-red-500">
+                              ₵{parseFloat(product.price).toFixed(2)}
+                            </span>
+                            <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded font-medium">
+                              SAVE ₵{(product.price * (product.discount_percentage / 100)).toFixed(2)}
+                            </span>
+                          </div>
+                          <span className="text-2xl font-bold text-red-600">
+                            ₵{(product.price * (1 - product.discount_percentage / 100)).toFixed(2)}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-2xl font-bold text-blue-600">
+                          ₵{parseFloat(product.price).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
                     <span className={`text-sm px-2 py-1 rounded ${
                       product.stock > 0 
                         ? 'bg-green-100 text-green-800' 

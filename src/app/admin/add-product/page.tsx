@@ -14,9 +14,12 @@ export default function AddProduct() {
     description: "",
     price: "",
     stock: "",
-    category: ""
+    category: "",
+    discount_percentage: "",
+    discount_start_date: "",
+    discount_end_date: ""
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,30 +41,39 @@ export default function AddProduct() {
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setImageFiles(files);
     }
   };
 
-  const uploadImage = async (file: File) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    const filePath = `products/${fileName}`;
+  const removeImage = (index: number) => {
+    setImageFiles(imageFiles.filter((_, i) => i !== index));
+  };
 
-    const { data, error } = await supabase.storage
-      .from('product-images')
-      .upload(filePath, file);
+  const uploadImages = async (files: File[]) => {
+    const uploadPromises = files.map(async (file, index) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${index}.${fileExt}`;
+      const filePath = `products/${fileName}`;
 
-    if (error) {
-      console.error('Error uploading image:', error);
-      throw error;
-    }
+      const { data, error } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file);
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('product-images')
-      .getPublicUrl(filePath);
+      if (error) {
+        console.error('Error uploading image:', error);
+        throw error;
+      }
 
-    return publicUrl;
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    });
+
+    return Promise.all(uploadPromises);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,12 +83,12 @@ export default function AddProduct() {
     setSuccess(false);
 
     try {
-      let imageUrl = null;
+      let imageUrls = [];
       
-      if (imageFile) {
+      if (imageFiles.length > 0) {
         setUploading(true);
-        imageUrl = await uploadImage(imageFile);
-        console.log('Image uploaded:', imageUrl);
+        imageUrls = await uploadImages(imageFiles);
+        console.log('Images uploaded:', imageUrls);
         setUploading(false);
       }
 
@@ -89,7 +101,10 @@ export default function AddProduct() {
             price: parseFloat(formData.price),
             stock: parseInt(formData.stock),
             category: formData.category,
-            image_url: imageUrl,
+            image_urls: imageUrls,
+            discount_percentage: formData.discount_percentage ? parseFloat(formData.discount_percentage) : null,
+            discount_start_date: formData.discount_start_date || null,
+            discount_end_date: formData.discount_end_date || null,
             created_at: new Date().toISOString()
           }
         ]);
@@ -105,9 +120,12 @@ export default function AddProduct() {
           description: "",
           price: "",
           stock: "",
-          category: ""
+          category: "",
+          discount_percentage: "",
+          discount_start_date: "",
+          discount_end_date: ""
         });
-        setImageFile(null);
+        setImageFiles([]);
       }
     } catch (error) {
       console.error("Error adding product:", error);
@@ -235,18 +253,93 @@ export default function AddProduct() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Product Image
+                Product Images (Multiple)
               </label>
               <input
                 type="file"
                 accept="image/*"
+                multiple
                 onChange={handleImageChange}
                 className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
               />
-              {imageFile && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Selected: {imageFile.name}
-                </p>
+              {imageFiles.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-sm text-gray-600">
+                    Selected {imageFiles.length} image(s):
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {imageFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span className="text-sm text-gray-700 truncate">{file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="text-red-600 hover:text-red-800 text-sm ml-2"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Discount Section */}
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Discount (Optional)</h3>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="discount_percentage"
+                    value={formData.discount_percentage}
+                    onChange={handleChange}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g. 20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    name="discount_start_date"
+                    value={formData.discount_start_date}
+                    onChange={handleChange}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    name="discount_end_date"
+                    value={formData.discount_end_date}
+                    onChange={handleChange}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              {formData.discount_percentage && formData.price && (
+                <div className="mt-3 p-3 bg-green-50 rounded-lg">
+                  <p className="text-sm text-green-800">
+                    Discounted Price: ₵{(parseFloat(formData.price) * (1 - parseFloat(formData.discount_percentage) / 100)).toFixed(2)}
+                  </p>
+                </div>
               )}
             </div>
 

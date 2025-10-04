@@ -3,6 +3,7 @@ import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { FaGoogle, FaGithub } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { AdminAuth } from "../../lib/adminAuth";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,17 +22,29 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    
     if (error) {
       setError(error.message);
     } else {
-      // Redirect based on user type
-      if (email === "admin@ecommerce.com") {
-        router.push("/admin");
+      // Check if user is admin
+      const isAdmin = await AdminAuth.isAdmin(email);
+      
+      if (isAdmin) {
+        // Create admin session
+        const sessionToken = await AdminAuth.createSession(email);
+        if (sessionToken) {
+          console.log('Admin session created');
+          router.push("/admin");
+        } else {
+          setError("Failed to create admin session");
+        }
       } else {
+        // Regular user
         router.push("/products");
       }
     }
