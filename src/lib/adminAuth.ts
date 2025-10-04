@@ -25,13 +25,11 @@ export class AdminAuth {
         .single();
 
       if (error || !data) {
-        console.error('Admin check error:', error);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Admin check error:', error);
       return false;
     }
   }
@@ -47,13 +45,11 @@ export class AdminAuth {
         .single();
 
       if (error || !data) {
-        console.error('Get admin user error:', error);
         return null;
       }
 
       return data as AdminUser;
     } catch (error) {
-      console.error('Get admin user error:', error);
       return null;
     }
   }
@@ -74,7 +70,6 @@ export class AdminAuth {
         }]);
 
       if (error) {
-        console.error('Create session error:', error);
         return null;
       }
 
@@ -86,7 +81,6 @@ export class AdminAuth {
 
       return sessionToken;
     } catch (error) {
-      console.error('Create session error:', error);
       return null;
     }
   }
@@ -112,7 +106,6 @@ export class AdminAuth {
 
       return true;
     } catch (error) {
-      console.error('Validate session error:', error);
       return false;
     }
   }
@@ -131,7 +124,7 @@ export class AdminAuth {
         localStorage.removeItem('admin_email');
       }
     } catch (error) {
-      console.error('Destroy session error:', error);
+      // Silent error handling
     }
   }
 
@@ -159,7 +152,7 @@ export class AdminAuth {
     try {
       await supabase.rpc('cleanup_expired_sessions');
     } catch (error) {
-      console.error('Cleanup sessions error:', error);
+      // Silent error handling
     }
   }
 }

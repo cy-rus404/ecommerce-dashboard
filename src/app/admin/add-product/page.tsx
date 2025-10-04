@@ -19,6 +19,8 @@ export default function AddProduct() {
     discount_start_date: "",
     discount_end_date: ""
   });
+  const [availableSizes, setAvailableSizes] = useState<string[]>([]);
+  const [availableColors, setAvailableColors] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -102,6 +104,8 @@ export default function AddProduct() {
             stock: parseInt(formData.stock),
             category: formData.category,
             image_urls: imageUrls,
+            available_sizes: availableSizes.length > 0 ? availableSizes : null,
+            available_colors: availableColors.length > 0 ? availableColors : null,
             discount_percentage: formData.discount_percentage ? parseFloat(formData.discount_percentage) : null,
             discount_start_date: formData.discount_start_date || null,
             discount_end_date: formData.discount_end_date || null,
@@ -126,6 +130,8 @@ export default function AddProduct() {
           discount_end_date: ""
         });
         setImageFiles([]);
+        setAvailableSizes([]);
+        setAvailableColors([]);
       }
     } catch (error) {
       console.error("Error adding product:", error);
@@ -244,11 +250,112 @@ export default function AddProduct() {
                 <option value="">Select Category</option>
                 <option value="electronics">Electronics</option>
                 <option value="clothing">Clothing</option>
+                <option value="shoes">Shoes</option>
                 <option value="books">Books</option>
                 <option value="home">Home & Garden</option>
                 <option value="sports">Sports</option>
                 <option value="other">Other</option>
               </select>
+            </div>
+
+            {/* Size Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Available Sizes
+              </label>
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  {formData.category === 'shoes' ? (
+                    // Shoe sizes
+                    [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48].map(size => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => {
+                          const sizeStr = size.toString();
+                          setAvailableSizes(prev => 
+                            prev.includes(sizeStr) 
+                              ? prev.filter(s => s !== sizeStr)
+                              : [...prev, sizeStr]
+                          );
+                        }}
+                        className={`px-3 py-1 border rounded text-sm ${
+                          availableSizes.includes(size.toString())
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-600'
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))
+                  ) : formData.category === 'clothing' ? (
+                    // Clothing sizes
+                    ['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => {
+                          setAvailableSizes(prev => 
+                            prev.includes(size) 
+                              ? prev.filter(s => s !== size)
+                              : [...prev, size]
+                          );
+                        }}
+                        className={`px-3 py-1 border rounded text-sm ${
+                          availableSizes.includes(size)
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-600'
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-sm">Select clothing or shoes category to add sizes</p>
+                  )}
+                </div>
+                {availableSizes.length > 0 && (
+                  <p className="text-sm text-gray-600">
+                    Selected sizes: {availableSizes.join(', ')}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Color Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Available Colors (Optional)
+              </label>
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  {['Black', 'White', 'Red', 'Blue', 'Green', 'Gray', 'Brown', 'Pink', 'Yellow', 'Purple'].map(color => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => {
+                        setAvailableColors(prev => 
+                          prev.includes(color) 
+                            ? prev.filter(c => c !== color)
+                            : [...prev, color]
+                        );
+                      }}
+                      className={`px-3 py-1 border rounded text-sm ${
+                        availableColors.includes(color)
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white text-gray-700 border-gray-300 hover:border-blue-600'
+                      }`}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+                {availableColors.length > 0 && (
+                  <p className="text-sm text-gray-600">
+                    Selected colors: {availableColors.join(', ')}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div>

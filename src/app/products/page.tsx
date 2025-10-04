@@ -91,7 +91,20 @@ export default function ProductsPage() {
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Products</h1>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700 text-sm hidden sm:block">Welcome, {user?.email}</span>
+              <button
+                onClick={() => router.push('/cart')}
+                className="text-2xl hover:opacity-70 transition"
+                title="Cart"
+              >
+                🛒
+              </button>
+              <button
+                onClick={() => router.push('/my-orders')}
+                className="bg-green-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg hover:bg-green-700 transition text-sm"
+              >
+                My Orders
+              </button>
+              <span className="text-gray-700 text-sm hidden sm:block">Welcome, {user?.user_metadata?.name || user?.email}</span>
               <button
                 onClick={handleLogout}
                 className="bg-red-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg hover:bg-red-700 transition text-sm"
@@ -120,6 +133,7 @@ export default function ProductsPage() {
                 <option value="all">All Categories</option>
                 <option value="electronics">Electronics</option>
                 <option value="clothing">Clothing</option>
+                <option value="shoes">Shoes</option>
                 <option value="books">Books</option>
                 <option value="home">Home & Garden</option>
                 <option value="sports">Sports</option>
@@ -142,7 +156,11 @@ export default function ProductsPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
-              <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+              <div 
+                key={product.id} 
+                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer"
+                onClick={() => router.push(`/products/${product.id}`)}
+              >
                 <div className="relative">
                   {product.image_urls && product.image_urls.length > 0 ? (
                     <>
