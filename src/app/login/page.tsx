@@ -28,7 +28,12 @@ export default function LoginPage() {
     if (error) {
       setError(error.message);
     } else {
-      router.push("/admin");
+      // Redirect based on user type
+      if (email === "admin@ecommerce.com") {
+        router.push("/admin");
+      } else {
+        router.push("/products");
+      }
     }
     setLoading(false);
   };

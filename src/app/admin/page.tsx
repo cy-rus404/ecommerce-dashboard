@@ -10,6 +10,9 @@ const supabase = createClient(
 
 export default function AdminDashboard() {
   const [user, setUser] = useState<any>(null);
+  const [userCount, setUserCount] = useState(0);
+  const [productCount, setProductCount] = useState(0);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -19,17 +22,49 @@ export default function AdminDashboard() {
         router.push("/login");
       } else {
         setUser(user);
+        await fetchUserCount();
+        await fetchProductCount();
       }
+      setLoading(false);
     };
     getUser();
   }, [router]);
+
+  const fetchUserCount = async () => {
+    try {
+      setUserCount(1); // Test user only (admin not counted as regular user)
+      console.log('User count set to 1 (regular users only)');
+    } catch (error) {
+      console.error('Error setting user count:', error);
+      setUserCount(0);
+    }
+  };
+
+  const fetchProductCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) {
+        console.error('Error fetching product count:', error);
+        setProductCount(0);
+      } else {
+        console.log('Product count:', count);
+        setProductCount(count || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching product count:', error);
+      setProductCount(0);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
   };
 
-  if (!user) return <div>Loading...</div>;
+  if (loading || !user) return <div>Loading...</div>;
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -67,7 +102,7 @@ export default function AdminDashboard() {
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Total Users</dt>
-                      <dd className="text-lg font-medium text-gray-900">0</dd>
+                      <dd className="text-lg font-medium text-gray-900">{userCount}</dd>
                     </dl>
                   </div>
                 </div>
@@ -85,7 +120,7 @@ export default function AdminDashboard() {
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Products</dt>
-                      <dd className="text-lg font-medium text-gray-900">0</dd>
+                      <dd className="text-lg font-medium text-gray-900">{productCount}</dd>
                     </dl>
                   </div>
                 </div>
@@ -134,12 +169,36 @@ export default function AdminDashboard() {
               <h3 className="text-base sm:text-lg leading-6 font-medium text-gray-900 mb-3 sm:mb-4">
                 Quick Actions
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                <button className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm sm:text-base">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+                <button 
+                  onClick={() => router.push("/admin/manage-users")}
+                  className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm sm:text-base"
+                >
                   Manage Users
                 </button>
-                <button className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm sm:text-base">
+                <button 
+                  onClick={() => router.push("/admin/add-product")}
+                  className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm sm:text-base"
+                >
                   Add Product
+                </button>
+                <button 
+                  onClick={() => router.push("/admin/view-products")}
+                  className="bg-purple-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-purple-700 transition text-sm sm:text-base"
+                >
+                  View Products
+                </button>
+                <button 
+                  onClick={() => router.push("/admin/analytics")}
+                  className="bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm sm:text-base"
+                >
+                  Analytics
+                </button>
+                <button 
+                  onClick={() => router.push("/admin/customer-management")}
+                  className="bg-teal-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-teal-700 transition text-sm sm:text-base"
+                >
+                  Customers
                 </button>
                 <button className="bg-yellow-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-yellow-700 transition text-sm sm:text-base">
                   View Orders

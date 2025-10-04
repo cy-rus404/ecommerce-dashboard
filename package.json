@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "create-admin": "node src/lib/createAdminUser.js"
+    "create-admin": "node src/lib/createAdminUser.js",
+    "create-test-user": "node src/lib/createTestUser.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",
