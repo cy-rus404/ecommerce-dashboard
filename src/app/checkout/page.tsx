@@ -132,6 +132,8 @@ export default function CheckoutPage() {
         phone: formData.phone
       };
 
+      console.log('Creating order with data:', orderData);
+
       const { data: newOrder, error: orderError } = await supabase
         .from('orders')
         .insert(orderData)
@@ -139,28 +141,34 @@ export default function CheckoutPage() {
         .single();
 
       if (orderError) {
-        // Continue anyway - clear cart and show success
-      } else {
-        // Create order items if order was created successfully
-        const orderItems = cartItems.map(item => ({
-          order_id: newOrder.id,
-          product_id: item.product_id,
-          quantity: item.quantity,
-          price: calculateItemPrice(item) / item.quantity,
-          selected_size: item.selected_size,
-          selected_color: item.selected_color
-        }));
-
-        const { error: itemsError } = await supabase
-          .from('order_items')
-          .insert(orderItems);
-
-        if (itemsError) {
-          // Handle error silently
-        }
+        console.error('Order creation error:', orderError);
+        throw new Error('Failed to create order');
       }
 
-      // Always clear cart and show success
+      console.log('Order created successfully:', newOrder);
+
+      // Create order items
+      const orderItems = cartItems.map(item => ({
+        order_id: newOrder.id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: calculateItemPrice(item) / item.quantity,
+        selected_size: item.selected_size,
+        selected_color: item.selected_color
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) {
+        console.error('Order items creation error:', itemsError);
+        throw new Error('Failed to create order items');
+      }
+
+      // Email functionality disabled for now
+
+      // Clear cart after successful order creation
       await supabase
         .from('cart')
         .delete()
@@ -169,14 +177,8 @@ export default function CheckoutPage() {
       alert('Payment successful! Order placed.');
       router.push('/my-orders');
     } catch (error) {
-      // Even if order creation fails, clear cart and show success
-      await supabase
-        .from('cart')
-        .delete()
-        .eq('user_id', user.id);
-      
-      alert('Payment successful! Order placed.');
-      router.push('/products');
+      console.error('Checkout error:', error);
+      alert('Error processing order. Please try again.');
     } finally {
       setProcessing(false);
     }

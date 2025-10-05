@@ -29,19 +29,17 @@ export default function ManageUsers() {
 
   const fetchUsers = async () => {
     try {
-      // Create mock users since we can't access auth.users directly
-      const mockUsers = [
-        {
-          id: '2', 
-          email: 'testuser@example.com',
-          created_at: new Date().toISOString(),
-          user_metadata: { name: 'John Doe', phone: '+233123456789' },
-          banned_until: null
-        }
-      ];
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      console.log("Mock users loaded:", mockUsers);
-      setUsers(mockUsers);
+      if (error) {
+        console.error("Error fetching users:", error);
+        setUsers([]);
+      } else {
+        setUsers(users || []);
+      }
     } catch (error) {
       console.error("Error loading users:", error);
       setUsers([]);
@@ -55,7 +53,7 @@ export default function ManageUsers() {
     
     try {
       const { error } = await supabase
-        .from('auth.users')
+        .from('users')
         .delete()
         .eq('id', userId);
       
@@ -63,7 +61,6 @@ export default function ManageUsers() {
         console.error("Supabase delete error:", error);
         alert("Error deleting user: " + error.message);
       } else {
-        console.log("User deleted successfully:", userId);
         setUsers(users.filter(user => user.id !== userId));
       }
     } catch (error) {
@@ -75,7 +72,7 @@ export default function ManageUsers() {
   const toggleUserStatus = async (userId: string, banned: boolean) => {
     try {
       const { error } = await supabase
-        .from('auth.users')
+        .from('users')
         .update({ 
           banned_until: banned ? null : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         })
@@ -85,7 +82,6 @@ export default function ManageUsers() {
         console.error("Supabase update error:", error);
         alert("Error updating user status: " + error.message);
       } else {
-        console.log("User status updated:", userId, banned ? 'unbanned' : 'banned');
         fetchUsers();
       }
     } catch (error) {
@@ -148,10 +144,10 @@ export default function ManageUsers() {
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {user.raw_user_meta_data?.name || user.user_metadata?.name || "N/A"}
+                          {user.name || "N/A"}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {user.raw_user_meta_data?.phone || user.user_metadata?.phone || "No phone"}
+                          {user.phone || "No phone"}
                         </div>
                       </div>
                     </td>

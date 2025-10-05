@@ -54,6 +54,7 @@ export default function OrderManagement() {
   };
 
   const updateOrderStatus = async (orderId: number, newStatus: string) => {
+    console.log('Updating order status:', orderId, 'to', newStatus);
     try {
       const { error } = await supabase
         .from('orders')
@@ -64,17 +65,11 @@ export default function OrderManagement() {
         .eq('id', orderId);
 
       if (error) {
+        console.error('Order update error:', error);
         alert("Error updating order status");
       } else {
-        // Send email notification to customer
-        const order = orders.find(o => o.id === orderId);
-        if (order) {
-          await EmailNotifications.sendOrderStatusUpdate(
-            order.customer_email,
-            orderId,
-            newStatus
-          );
-        }
+        console.log('Order status updated successfully');
+        // Email functionality disabled for now
         
         fetchOrders();
         if (selectedOrder?.id === orderId) {
@@ -82,7 +77,7 @@ export default function OrderManagement() {
         }
       }
     } catch (error) {
-      // Handle error silently
+      console.error('Update order status error:', error);
     }
   };
 

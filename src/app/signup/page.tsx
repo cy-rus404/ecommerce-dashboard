@@ -35,7 +35,7 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: formData.email,
       password: formData.password,
       options: {
@@ -49,6 +49,19 @@ export default function SignupPage() {
     if (error) {
       setError(error.message);
     } else {
+      // Add user to users table
+      if (data.user) {
+        const { error: userError } = await supabase.from('users').insert({
+          id: data.user.id,
+          email: formData.email,
+          name: formData.name,
+          phone: formData.phone
+        });
+        
+        if (userError) {
+          console.error('Error inserting user:', userError);
+        }
+      }
       router.push("/login");
     }
     setLoading(false);

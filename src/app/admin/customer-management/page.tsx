@@ -32,19 +32,27 @@ export default function CustomerManagement() {
 
   const fetchData = async () => {
     try {
-      // Mock customers data (in real app, this would come from a users table)
-      const mockCustomers = [
-        {
-          id: "1",
-          email: "testuser@example.com",
-          name: "John Doe",
-          phone: "+233123456789",
-          created_at: new Date().toISOString(),
-          total_orders: 0,
-          total_spent: 0,
-          status: "active"
-        }
-      ];
+      // Fetch users from users table with order stats
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select(`
+          *,
+          orders(total_amount)
+        `);
+      
+      let realCustomers: any[] = [];
+      if (!usersError && users) {
+        realCustomers = users.map(user => ({
+          id: user.id,
+          email: user.email,
+          name: user.name || 'Unknown',
+          phone: user.phone || 'N/A',
+          created_at: user.created_at,
+          total_orders: user.orders?.length || 0,
+          total_spent: user.orders?.reduce((sum: number, order: any) => sum + parseFloat(order.total_amount), 0) || 0,
+          status: 'active'
+        }));
+      }
 
       // Fetch support tickets
       const { data: ticketsData, error: ticketsError } = await supabase
@@ -58,7 +66,7 @@ export default function CustomerManagement() {
         setTickets(ticketsData || []);
       }
 
-      setCustomers(mockCustomers);
+      setCustomers(realCustomers);
     } catch (error) {
       // Handle error silently
     } finally {

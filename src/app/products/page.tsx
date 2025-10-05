@@ -129,6 +129,12 @@ export default function ProductsPage() {
               >
                 My Orders
               </button>
+              <button
+                onClick={() => router.push('/profile')}
+                className="bg-purple-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg hover:bg-purple-700 transition text-sm"
+              >
+                Profile
+              </button>
               <span className="text-gray-700 text-sm hidden sm:block">Welcome, {user?.user_metadata?.name || user?.email}</span>
               <button
                 onClick={handleLogout}
