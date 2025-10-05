@@ -253,6 +253,12 @@ export default function AdminDashboard() {
                 >
                   Manage Admins
                 </button>
+                <button 
+                  onClick={() => router.push("/admin/delivery-zones")}
+                  className="bg-orange-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-orange-700 transition text-sm sm:text-base"
+                >
+                  Delivery Zones
+                </button>
               </div>
             </div>
           </div>

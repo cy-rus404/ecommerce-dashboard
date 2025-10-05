@@ -53,7 +53,6 @@ export default function CustomerManagement() {
         .order('created_at', { ascending: false });
 
       if (ticketsError) {
-        console.error("Error fetching tickets:", ticketsError);
         setTickets([]);
       } else {
         setTickets(ticketsData || []);
@@ -61,7 +60,7 @@ export default function CustomerManagement() {
 
       setCustomers(mockCustomers);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      // Handle error silently
     } finally {
       setLoading(false);
     }
@@ -85,15 +84,13 @@ export default function CustomerManagement() {
         ]);
 
       if (error) {
-        console.error("Error creating ticket:", error);
         alert("Error creating ticket");
       } else {
-        console.log("Ticket created successfully");
         setNewTicket({ subject: "", message: "", priority: "medium" });
         fetchData();
       }
     } catch (error) {
-      console.error("Error creating ticket:", error);
+      // Handle error silently
     }
   };
 
@@ -105,13 +102,12 @@ export default function CustomerManagement() {
         .eq('id', ticketId);
 
       if (error) {
-        console.error("Error updating ticket:", error);
+        // Handle error silently
       } else {
-        console.log("Ticket status updated");
         fetchData();
       }
     } catch (error) {
-      console.error("Error updating ticket:", error);
+      // Handle error silently
     }
   };
 
@@ -131,15 +127,13 @@ export default function CustomerManagement() {
         ]);
 
       if (error) {
-        console.error("Error sending message:", error);
         alert("Error sending message");
       } else {
-        console.log("Message sent successfully");
         setNewMessage("");
         alert("Message sent to customer!");
       }
     } catch (error) {
-      console.error("Error sending message:", error);
+      // Handle error silently
     }
   };
 

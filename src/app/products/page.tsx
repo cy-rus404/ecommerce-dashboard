@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import OptimizedImage from "../../components/OptimizedImage";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,6 +16,7 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState<any>(null);
+  const [cartCount, setCartCount] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -32,6 +34,7 @@ export default function ProductsPage() {
     } else {
       setUser(user);
       fetchProducts();
+      fetchCartCount(user.id);
     }
   };
 
@@ -77,6 +80,21 @@ export default function ProductsPage() {
     setFilteredProducts(filtered);
   };
 
+  const fetchCartCount = async (userId: string) => {
+    try {
+      const { count, error } = await supabase
+        .from('cart')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+      
+      if (!error) {
+        setCartCount(count || 0);
+      }
+    } catch (error) {
+      setCartCount(0);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
@@ -91,13 +109,20 @@ export default function ProductsPage() {
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Products</h1>
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/cart')}
-                className="text-2xl hover:opacity-70 transition"
-                title="Cart"
-              >
-                🛒
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => router.push('/cart')}
+                  className="text-2xl hover:opacity-70 transition"
+                  title="Cart"
+                >
+                  🛒
+                </button>
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </div>
               <button
                 onClick={() => router.push('/my-orders')}
                 className="bg-green-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg hover:bg-green-700 transition text-sm"
@@ -158,19 +183,18 @@ export default function ProductsPage() {
             {filteredProducts.map((product) => (
               <div 
                 key={product.id} 
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer"
+                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer flex flex-col h-full"
                 onClick={() => router.push(`/products/${product.id}`)}
               >
                 <div className="relative">
                   {product.image_urls && product.image_urls.length > 0 ? (
                     <>
-                      <img
+                      <OptimizedImage
                         src={product.image_urls[0]}
                         alt={product.name}
                         className="w-full h-48 object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = "https://via.placeholder.com/300x200?text=No+Image";
-                        }}
+                        width={300}
+                        height={200}
                       />
                       {product.image_urls.length > 1 && (
                         <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
@@ -195,7 +219,7 @@ export default function ProductsPage() {
                   )}
                 </div>
                 
-                <div className="p-4">
+                <div className="p-4 flex flex-col flex-1">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-lg font-semibold text-gray-900 truncate">
                       {product.name}
@@ -243,16 +267,18 @@ export default function ProductsPage() {
                     </span>
                   </div>
                   
-                  <button
-                    disabled={product.stock === 0}
-                    className={`w-full py-2 px-4 rounded-lg font-medium transition ${
-                      product.stock > 0
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
-                  >
-                    {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
-                  </button>
+                  <div className="mt-auto">
+                    <button
+                      disabled={product.stock === 0}
+                      className={`w-full py-2 px-4 rounded-lg font-medium transition ${
+                        product.stock > 0
+                          ? 'bg-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
+                    >
+                      {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

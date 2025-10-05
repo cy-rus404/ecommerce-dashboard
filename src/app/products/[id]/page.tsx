@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter, useParams } from "next/navigation";
+import OptimizedImage from "../../../components/OptimizedImage";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -100,6 +101,8 @@ export default function ProductDetailPage() {
         alert('Failed to add to cart');
       } else {
         alert('Added to cart successfully!');
+        // Refresh page to update cart count
+        window.location.reload();
       }
     } catch (error) {
       alert('Failed to add to cart');
@@ -151,10 +154,12 @@ export default function ProductDetailPage() {
             <div>
               <div className="mb-4">
                 {product.image_urls && product.image_urls.length > 0 ? (
-                  <img
+                  <OptimizedImage
                     src={product.image_urls[currentImageIndex]}
                     alt={product.name}
                     className="w-full h-96 object-cover rounded-lg"
+                    width={600}
+                    height={400}
                   />
                 ) : (
                   <div className="w-full h-96 bg-gray-200 flex items-center justify-center rounded-lg">
@@ -166,15 +171,21 @@ export default function ProductDetailPage() {
               {product.image_urls && product.image_urls.length > 1 && (
                 <div className="flex space-x-2 overflow-x-auto">
                   {product.image_urls.map((url: string, index: number) => (
-                    <img
+                    <div
                       key={index}
-                      src={url}
-                      alt={`${product.name} ${index + 1}`}
-                      className={`w-20 h-20 object-cover rounded cursor-pointer ${
+                      className={`w-20 h-20 rounded cursor-pointer ${
                         currentImageIndex === index ? 'ring-2 ring-blue-500' : ''
                       }`}
                       onClick={() => setCurrentImageIndex(index)}
-                    />
+                    >
+                      <OptimizedImage
+                        src={url}
+                        alt={`${product.name} ${index + 1}`}
+                        className="w-20 h-20 object-cover rounded"
+                        width={80}
+                        height={80}
+                      />
+                    </div>
                   ))}
                 </div>
               )}
@@ -225,7 +236,7 @@ export default function ProductDetailPage() {
                     {product?.category === 'shoes' ? 'Shoe Size' : 'Size'}
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    {sizes.map((size) => (
+                    {sizes.map((size: string) => (
                       <button
                         key={size}
                         onClick={() => setSelectedSize(size)}
@@ -247,7 +258,7 @@ export default function ProductDetailPage() {
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold mb-3">Color</h3>
                   <div className="flex flex-wrap gap-2">
-                    {colors.map((color) => (
+                    {colors.map((color: string) => (
                       <button
                         key={color}
                         onClick={() => setSelectedColor(color)}
@@ -308,7 +319,7 @@ export default function ProductDetailPage() {
                   : product.stock === 0 
                   ? 'Out of Stock' 
                   : (sizes.length > 0 && !selectedSize) || (colors.length > 0 && !selectedColor)
-                  ? `Select ${!selectedSize && sizes.length > 0 ? 'Size' : ''}${!selectedSize && !selectedColor && sizes.length > 0 && colors.length > 0 ? ' & ' : ''}${!selectedColor && colors.length > 0 ? 'Color' : ''}`
+                  ? 'Select Size & Color'
                   : 'Add to Cart'
                 }
               </button>

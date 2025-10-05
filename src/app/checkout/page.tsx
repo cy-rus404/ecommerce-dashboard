@@ -19,10 +19,13 @@ export default function CheckoutPage() {
     phone: "",
     address: "",
     city: "",
+    deliveryZone: "",
     cardNumber: "4111111111111111",
     expiryDate: "12/25",
     cvv: "123"
   });
+  const [deliveryZones, setDeliveryZones] = useState<any[]>([]);
+  const [deliveryFee, setDeliveryFee] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -37,6 +40,7 @@ export default function CheckoutPage() {
       setUser(user);
       setFormData(prev => ({ ...prev, email: user.email || "" }));
       fetchCartItems(user.id);
+      fetchDeliveryZones();
     }
   };
 
@@ -84,6 +88,32 @@ export default function CheckoutPage() {
     return cartItems.reduce((total, item) => total + calculateItemPrice(item), 0);
   };
 
+  const getFinalTotal = () => {
+    return getTotalPrice() + deliveryFee;
+  };
+
+  const fetchDeliveryZones = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('delivery_zones')
+        .select('*')
+        .eq('is_active', true)
+        .order('zone_name');
+
+      if (!error && data) {
+        setDeliveryZones(data);
+      }
+    } catch (error) {
+      // Handle error
+    }
+  };
+
+  const handleZoneChange = (zoneId: string) => {
+    const zone = deliveryZones.find(z => z.id.toString() === zoneId);
+    setFormData({...formData, deliveryZone: zoneId});
+    setDeliveryFee(zone ? parseFloat(zone.delivery_fee) : 0);
+  };
+
   const processPayment = async () => {
     setProcessing(true);
     
@@ -95,7 +125,8 @@ export default function CheckoutPage() {
       const orderData = {
         user_id: user.id,
         customer_email: formData.email,
-        total_amount: getTotalPrice(),
+        total_amount: getFinalTotal(),
+        delivery_fee: deliveryFee,
         status: 'pending',
         shipping_address: `${formData.address}, ${formData.city}`,
         phone: formData.phone
@@ -192,10 +223,18 @@ export default function CheckoutPage() {
                   <p className="font-semibold">₵{calculateItemPrice(item).toFixed(2)}</p>
                 </div>
               ))}
-              <div className="border-t pt-4">
-                <div className="flex justify-between text-xl font-bold">
-                  <span>Total:</span>
+              <div className="border-t pt-4 space-y-2">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
                   <span>₵{getTotalPrice().toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Delivery Fee:</span>
+                  <span>₵{deliveryFee.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xl font-bold border-t pt-2">
+                  <span>Total:</span>
+                  <span>₵{getFinalTotal().toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -256,6 +295,25 @@ export default function CheckoutPage() {
                   className="w-full p-3 border rounded-lg"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Delivery Zone
+                </label>
+                <select
+                  value={formData.deliveryZone}
+                  onChange={(e) => handleZoneChange(e.target.value)}
+                  className="w-full p-3 border rounded-lg"
+                  required
+                >
+                  <option value="">Select Delivery Zone</option>
+                  {deliveryZones.map((zone) => (
+                    <option key={zone.id} value={zone.id}>
+                      {zone.zone_name} - ₵{parseFloat(zone.delivery_fee).toFixed(2)}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="border-t pt-4">
@@ -339,10 +397,10 @@ export default function CheckoutPage() {
               <button
                 type="button"
                 onClick={processPayment}
-                disabled={processing}
+                disabled={processing || !formData.deliveryZone}
                 className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50"
               >
-                {processing ? "Processing Payment..." : `Pay ₵${getTotalPrice().toFixed(2)}`}
+                {processing ? "Processing Payment..." : `Pay ₵${getFinalTotal().toFixed(2)}`}
               </button>
             </form>
           </div>

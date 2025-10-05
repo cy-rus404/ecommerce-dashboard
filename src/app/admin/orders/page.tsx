@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import { EmailService } from "../../../lib/emailService";
+import { EmailNotifications } from "../../../lib/emailNotifications";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -42,14 +42,11 @@ export default function OrderManagement() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error("Error fetching orders:", error);
         setOrders([]);
       } else {
-        console.log("Orders fetched:", data);
         setOrders(data || []);
       }
     } catch (error) {
-      console.error("Error fetching orders:", error);
       setOrders([]);
     } finally {
       setLoading(false);
@@ -67,20 +64,16 @@ export default function OrderManagement() {
         .eq('id', orderId);
 
       if (error) {
-        console.error("Error updating order status:", error);
         alert("Error updating order status");
       } else {
-        console.log("Order status updated successfully");
-        
         // Send email notification to customer
         const order = orders.find(o => o.id === orderId);
         if (order) {
-          await EmailService.sendOrderStatusUpdate(
+          await EmailNotifications.sendOrderStatusUpdate(
             order.customer_email,
             orderId,
             newStatus
           );
-          console.log('Order status email sent to customer');
         }
         
         fetchOrders();
@@ -89,7 +82,7 @@ export default function OrderManagement() {
         }
       }
     } catch (error) {
-      console.error("Error updating order status:", error);
+      // Handle error silently
     }
   };
 
