@@ -195,7 +195,27 @@ export default function CheckoutPage() {
         throw new Error('Failed to create order items');
       }
 
-      // Email functionality disabled for now
+      // Reduce stock for each product
+      for (const item of cartItems) {
+        const { error: stockError } = await supabase.rpc('reduce_product_stock', {
+          product_id: item.product_id,
+          quantity_to_reduce: item.quantity
+        });
+        
+        if (stockError) {
+          console.error('Stock reduction error:', stockError);
+        }
+      }
+
+      // Send SMS order confirmation to customer
+      if (formData.phone) {
+        try {
+          const { SMSService } = await import('../../../lib/smsService');
+          await SMSService.sendOrderConfirmation(formData.phone, newOrder.id, getFinalTotal());
+        } catch (error) {
+          console.error('SMS notification error:', error);
+        }
+      }
 
       // Clear cart after successful order creation
       await supabase

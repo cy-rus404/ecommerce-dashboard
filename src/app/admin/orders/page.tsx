@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import { EmailNotifications } from "../../../lib/emailNotifications";
+import { SMSService } from "../../../lib/smsService";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -69,7 +69,16 @@ export default function OrderManagement() {
         alert("Error updating order status");
       } else {
         console.log('Order status updated successfully');
-        // Email functionality disabled for now
+        
+        // Send SMS notification to customer
+        const order = orders.find(o => o.id === orderId);
+        if (order && order.phone) {
+          try {
+            await SMSService.sendOrderStatusUpdate(order.phone, orderId, newStatus);
+          } catch (error) {
+            console.error('SMS notification error:', error);
+          }
+        }
         
         fetchOrders();
         if (selectedOrder?.id === orderId) {

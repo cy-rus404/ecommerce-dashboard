@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { EmailService } from "../../../lib/emailService";
+import { SMSService } from "../../../lib/smsService";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -220,7 +221,13 @@ export default function ViewProducts() {
                 onClick={() => EmailService.checkAndSendLowStockAlerts()}
                 className="px-3 py-1 bg-orange-600 text-white rounded text-sm hover:bg-orange-700"
               >
-                Send Stock Alerts
+                Email Alerts
+              </button>
+              <button
+                onClick={() => SMSService.checkAndSendLowStockAlerts()}
+                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+              >
+                SMS Alerts
               </button>
               <select
                 value={filter}
