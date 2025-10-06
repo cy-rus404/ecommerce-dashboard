@@ -15,6 +15,9 @@ export default function AddProduct() {
     price: "",
     stock: "",
     category: "",
+    gender: "",
+    age_group: "",
+    brand: "",
     discount_percentage: "",
     discount_start_date: "",
     discount_end_date: ""
@@ -106,6 +109,9 @@ export default function AddProduct() {
             image_urls: imageUrls,
             available_sizes: availableSizes.length > 0 ? availableSizes : null,
             available_colors: availableColors.length > 0 ? availableColors : null,
+            ...(formData.gender && { gender: formData.gender }),
+            ...(formData.age_group && { age_group: formData.age_group }),
+            ...(formData.brand && { brand: formData.brand }),
             discount_percentage: formData.discount_percentage ? parseFloat(formData.discount_percentage) : null,
             discount_start_date: formData.discount_start_date || null,
             discount_end_date: formData.discount_end_date || null,
@@ -115,7 +121,11 @@ export default function AddProduct() {
 
       if (error) {
         console.error("Supabase insert error:", error);
-        setError(error.message);
+        if (error.message.includes('column') && error.message.includes('does not exist')) {
+          setError('Database needs to be updated. Please run the add-product-demographics.sql file in Supabase.');
+        } else {
+          setError(error.message);
+        }
       } else {
         console.log("Product added successfully:", data);
         setSuccess(true);
@@ -125,6 +135,9 @@ export default function AddProduct() {
           price: "",
           stock: "",
           category: "",
+          gender: "",
+          age_group: "",
+          brand: "",
           discount_percentage: "",
           discount_start_date: "",
           discount_end_date: ""
@@ -236,26 +249,88 @@ export default function AddProduct() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category
-              </label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select Category</option>
-                <option value="electronics">Electronics</option>
-                <option value="clothing">Clothing</option>
-                <option value="shoes">Shoes</option>
-                <option value="books">Books</option>
-                <option value="home">Home & Garden</option>
-                <option value="sports">Sports</option>
-                <option value="other">Other</option>
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">Select Category</option>
+                  <option value="electronics">📱 Electronics</option>
+                  <option value="clothing">👕 Clothing</option>
+                  <option value="shoes">👟 Shoes</option>
+                  <option value="accessories">👜 Accessories</option>
+                  <option value="beauty">💄 Beauty & Personal Care</option>
+                  <option value="sports">⚽ Sports & Fitness</option>
+                  <option value="books">📚 Books</option>
+                  <option value="home">🏠 Home & Garden</option>
+                  <option value="toys">🧸 Toys & Games</option>
+                  <option value="jewelry">💍 Jewelry</option>
+                  <option value="other">🔧 Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Brand (Optional)
+                </label>
+                <input
+                  type="text"
+                  name="brand"
+                  value={formData.brand}
+                  onChange={handleChange}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g. Nike, Apple, Samsung"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Target Gender
+                </label>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="men">👨 Men</option>
+                  <option value="women">👩 Women</option>
+                  <option value="unisex">👫 Unisex</option>
+                  <option value="boys">👦 Boys</option>
+                  <option value="girls">👧 Girls</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Age Group
+                </label>
+                <select
+                  name="age_group"
+                  value={formData.age_group}
+                  onChange={handleChange}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Age Group</option>
+                  <option value="baby">👶 Baby (0-2 years)</option>
+                  <option value="toddler">🧒 Toddler (2-4 years)</option>
+                  <option value="kids">👦👧 Kids (5-12 years)</option>
+                  <option value="teen">🧑‍🎓 Teen (13-17 years)</option>
+                  <option value="adult">🧑 Adult (18+ years)</option>
+                  <option value="senior">👴👵 Senior (65+ years)</option>
+                  <option value="all_ages">🌟 All Ages</option>
+                </select>
+              </div>
             </div>
 
             {/* Size Selection */}

@@ -224,6 +224,12 @@ export default function AdminDashboard() {
                   Add Product
                 </button>
                 <button 
+                  onClick={() => router.push("/admin/bulk-upload")}
+                  className="bg-emerald-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-emerald-700 transition text-sm sm:text-base"
+                >
+                  📦 Bulk Upload
+                </button>
+                <button 
                   onClick={() => router.push("/admin/view-products")}
                   className="bg-purple-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-purple-700 transition text-sm sm:text-base"
                 >

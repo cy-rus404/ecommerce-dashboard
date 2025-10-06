@@ -16,6 +16,11 @@ export default function ProductsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
+  const [selectedSize, setSelectedSize] = useState("all");
+  const [selectedColor, setSelectedColor] = useState("all");
+  const [selectedGender, setSelectedGender] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
   const [user, setUser] = useState<any>(null);
   const [cartCount, setCartCount] = useState(0);
   const [addingToCart, setAddingToCart] = useState<number | null>(null);
@@ -29,7 +34,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     filterProducts();
-  }, [products, selectedCategory, searchQuery]);
+  }, [products, selectedCategory, searchQuery, priceRange, selectedSize, selectedColor, selectedGender, sortBy]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -70,11 +75,6 @@ export default function ProductsPage() {
   const filterProducts = () => {
     let filtered = products;
     
-    // Filter by category
-    if (selectedCategory !== "all") {
-      filtered = filtered.filter(product => product.category === selectedCategory);
-    }
-    
     // Filter by search query
     if (searchQuery.trim()) {
       filtered = filtered.filter(product => 
@@ -82,6 +82,60 @@ export default function ProductsPage() {
         product.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
+    
+    // Filter by category
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter(product => product.category === selectedCategory);
+    }
+    
+    // Filter by price range
+    filtered = filtered.filter(product => {
+      const price = parseFloat(product.price);
+      return price >= priceRange.min && price <= priceRange.max;
+    });
+    
+    // Filter by size
+    if (selectedSize !== "all") {
+      filtered = filtered.filter(product => 
+        product.available_sizes?.includes(selectedSize) ||
+        (product.category === 'shoes' && ['30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48'].includes(selectedSize)) ||
+        (product.category === 'clothing' && ['XS', 'S', 'M', 'L', 'XL', 'XXL'].includes(selectedSize))
+      );
+    }
+    
+    // Filter by color
+    if (selectedColor !== "all") {
+      filtered = filtered.filter(product => 
+        product.available_colors?.includes(selectedColor) ||
+        ['Black', 'White', 'Red', 'Blue', 'Green', 'Gray'].includes(selectedColor)
+      );
+    }
+    
+    // Filter by gender
+    if (selectedGender !== "all") {
+      filtered = filtered.filter(product => 
+        product.gender === selectedGender ||
+        product.name.toLowerCase().includes(selectedGender) ||
+        product.description.toLowerCase().includes(selectedGender)
+      );
+    }
+    
+    // Sort products
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'price-low':
+          return parseFloat(a.price) - parseFloat(b.price);
+        case 'price-high':
+          return parseFloat(b.price) - parseFloat(a.price);
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'popularity':
+          return (b.stock || 0) - (a.stock || 0);
+        case 'newest':
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
     
     setFilteredProducts(filtered);
   };
@@ -246,32 +300,130 @@ export default function ProductsPage() {
             </div>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
+          {/* Search Bar */}
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="Search products by name or description..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+            />
+          </div>
+          
+          {/* Filters */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-4">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+            >
+              <option value="all">All Categories</option>
+              <option value="electronics">Electronics</option>
+              <option value="clothing">Clothing</option>
+              <option value="shoes">Shoes</option>
+              <option value="books">Books</option>
+              <option value="home">Home & Garden</option>
+              <option value="sports">Sports</option>
+              <option value="other">Other</option>
+            </select>
+            
+            <select
+              value={selectedGender}
+              onChange={(e) => setSelectedGender(e.target.value)}
+              className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+            >
+              <option value="all">All Genders</option>
+              <option value="men">Men</option>
+              <option value="women">Women</option>
+              <option value="kids">Kids</option>
+              <option value="unisex">Unisex</option>
+            </select>
+            
+            <select
+              value={selectedSize}
+              onChange={(e) => setSelectedSize(e.target.value)}
+              className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+            >
+              <option value="all">All Sizes</option>
+              <option value="XS">XS</option>
+              <option value="S">S</option>
+              <option value="M">M</option>
+              <option value="L">L</option>
+              <option value="XL">XL</option>
+              <option value="XXL">XXL</option>
+              <option value="36">36</option>
+              <option value="38">38</option>
+              <option value="40">40</option>
+              <option value="42">42</option>
+              <option value="44">44</option>
+            </select>
+            
+            <select
+              value={selectedColor}
+              onChange={(e) => setSelectedColor(e.target.value)}
+              className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+            >
+              <option value="all">All Colors</option>
+              <option value="Black">Black</option>
+              <option value="White">White</option>
+              <option value="Red">Red</option>
+              <option value="Blue">Blue</option>
+              <option value="Green">Green</option>
+              <option value="Gray">Gray</option>
+            </select>
+            
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+            >
+              <option value="newest">Newest First</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="name">Name A-Z</option>
+              <option value="popularity">Most Popular</option>
+            </select>
+            
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-600">₵</span>
               <input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                type="number"
+                placeholder="Min"
+                value={priceRange.min}
+                onChange={(e) => setPriceRange({...priceRange, min: parseInt(e.target.value) || 0})}
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-xs"
+              />
+              <span className="text-xs text-gray-400">-</span>
+              <input
+                type="number"
+                placeholder="Max"
+                value={priceRange.max}
+                onChange={(e) => setPriceRange({...priceRange, max: parseInt(e.target.value) || 1000})}
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-xs"
               />
             </div>
-            <div className="w-full sm:w-auto">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full sm:w-auto p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-              >
-                <option value="all">All Categories</option>
-                <option value="electronics">Electronics</option>
-                <option value="clothing">Clothing</option>
-                <option value="shoes">Shoes</option>
-                <option value="books">Books</option>
-                <option value="home">Home & Garden</option>
-                <option value="sports">Sports</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
+          </div>
+          
+          {/* Results Count */}
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-sm text-gray-600">
+              Showing {filteredProducts.length} of {products.length} products
+            </span>
+            <button
+              onClick={() => {
+                setSelectedCategory("all");
+                setSearchQuery("");
+                setPriceRange({ min: 0, max: 1000 });
+                setSelectedSize("all");
+                setSelectedColor("all");
+                setSelectedGender("all");
+                setSortBy("newest");
+              }}
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
+              Clear All Filters
+            </button>
           </div>
         </div>
       </header>
