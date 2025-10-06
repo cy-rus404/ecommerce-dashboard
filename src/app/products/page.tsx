@@ -19,6 +19,8 @@ export default function ProductsPage() {
   const [user, setUser] = useState<any>(null);
   const [cartCount, setCartCount] = useState(0);
   const [addingToCart, setAddingToCart] = useState<number | null>(null);
+  const [wishlist, setWishlist] = useState<number[]>([]);
+  const [wishlistLoading, setWishlistLoading] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -37,6 +39,7 @@ export default function ProductsPage() {
       setUser(user);
       fetchProducts();
       fetchCartCount(user.id);
+      fetchWishlist(user.id);
     }
   };
 
@@ -98,6 +101,54 @@ export default function ProductsPage() {
     }
   };
 
+  const fetchWishlist = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('wishlist')
+        .select('product_id')
+        .eq('user_id', userId);
+      
+      if (!error && data) {
+        setWishlist(data.map(item => item.product_id));
+      }
+    } catch (error) {
+      setWishlist([]);
+    }
+  };
+
+  const toggleWishlist = async (productId: number) => {
+    if (!user) return;
+    
+    setWishlistLoading(productId);
+    const isInWishlist = wishlist.includes(productId);
+    
+    try {
+      if (isInWishlist) {
+        const { error } = await supabase
+          .from('wishlist')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('product_id', productId);
+        
+        if (!error) {
+          setWishlist(wishlist.filter(id => id !== productId));
+        }
+      } else {
+        const { error } = await supabase
+          .from('wishlist')
+          .insert({ user_id: user.id, product_id: productId });
+        
+        if (!error) {
+          setWishlist([...wishlist, productId]);
+        }
+      }
+    } catch (error) {
+      console.error('Wishlist error:', error);
+    } finally {
+      setWishlistLoading(null);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
@@ -139,9 +190,11 @@ export default function ProductsPage() {
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center mb-4">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Products</h1>
-            <div className="flex items-center space-x-4">
+            
+            {/* Mobile Menu */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               <div className="relative">
                 <button
                   onClick={() => router.push('/cart')}
@@ -156,25 +209,40 @@ export default function ProductsPage() {
                   </span>
                 )}
               </div>
+              
               <button
                 onClick={() => router.push('/my-orders')}
-                className="bg-green-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg hover:bg-green-700 transition text-sm"
+                className="bg-green-600 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg hover:bg-green-700 transition text-xs sm:text-sm"
               >
-                My Orders
+                Orders
               </button>
+              
+              <button
+                onClick={() => router.push('/wishlist')}
+                className="bg-pink-600 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg hover:bg-pink-700 transition text-xs sm:text-sm"
+              >
+                <span className="sm:hidden">❤️</span>
+                <span className="hidden sm:inline">❤️ Wishlist</span>
+              </button>
+              
               <button
                 onClick={() => router.push('/profile')}
-                className="bg-purple-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg hover:bg-purple-700 transition text-sm"
+                className="bg-purple-600 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg hover:bg-purple-700 transition text-xs sm:text-sm"
               >
                 Profile
               </button>
-              <span className="text-gray-700 text-sm hidden sm:block">Welcome, {user?.user_metadata?.name || user?.email}</span>
+              
               <button
                 onClick={handleLogout}
-                className="bg-red-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg hover:bg-red-700 transition text-sm"
+                className="bg-red-600 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg hover:bg-red-700 transition text-xs sm:text-sm"
               >
                 Logout
               </button>
+            </div>
+            
+            {/* Welcome message - hidden on mobile */}
+            <div className="hidden lg:block text-gray-700 text-sm">
+              Welcome, {user?.user_metadata?.name || user?.email}
             </div>
           </div>
           
@@ -185,14 +253,14 @@ export default function ProductsPage() {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
               />
             </div>
-            <div>
+            <div className="w-full sm:w-auto">
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full sm:w-auto p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
               >
                 <option value="all">All Categories</option>
                 <option value="electronics">Electronics</option>
@@ -268,9 +336,23 @@ export default function ProductsPage() {
                     </span>
                   </div>
                   
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                  <p className="text-gray-600 text-sm mb-2 line-clamp-2">
                     {product.description}
                   </p>
+                  
+                  {/* Rating Display */}
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className="flex text-yellow-500">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <span key={star} className="text-sm">
+                          {star <= 4 ? '⭐' : '☆'}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="text-xs text-gray-500">(4.0)</span>
+                    <span className="text-xs text-gray-400">•</span>
+                    <span className="text-xs text-gray-500">12 reviews</span>
+                  </div>
                   
                   <div className="flex justify-between items-center mb-3">
                     <div className="flex flex-col">
@@ -306,17 +388,37 @@ export default function ProductsPage() {
                     </span>
                   </div>
                   
-                  <div className="mt-auto">
-                    <button
-                      disabled={product.stock === 0}
-                      className={`w-full py-2 px-4 rounded-lg font-medium transition ${
-                        product.stock > 0
-                          ? 'bg-blue-600 text-white hover:bg-blue-700'
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      }`}
-                    >
-                      {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
-                    </button>
+                  <div className="mt-auto space-y-2">
+                    <div className="flex gap-2">
+                      <button
+                        disabled={product.stock === 0}
+                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition ${
+                          product.stock > 0
+                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleWishlist(product.id);
+                        }}
+                        disabled={wishlistLoading === product.id}
+                        className={`p-2 rounded-lg transition ${
+                          wishlist.includes(product.id)
+                            ? 'bg-pink-600 text-white hover:bg-pink-700'
+                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                        }`}
+                      >
+                        {wishlistLoading === product.id ? (
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
+                        ) : (
+                          wishlist.includes(product.id) ? '❤️' : '🤍'
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

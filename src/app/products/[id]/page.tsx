@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter, useParams } from "next/navigation";
 import OptimizedImage from "../../../components/OptimizedImage";
+import Breadcrumb from "../../../components/Breadcrumb";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,6 +19,9 @@ export default function ProductDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [addingToCart, setAddingToCart] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+  const [submittingReview, setSubmittingReview] = useState(false);
   const router = useRouter();
   const params = useParams();
 
@@ -28,6 +32,8 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (params.id && user) {
       fetchProduct();
+      trackRecentlyViewed();
+      fetchReviews();
     }
   }, [params.id, user]);
 
@@ -59,6 +65,74 @@ export default function ProductDetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const trackRecentlyViewed = async () => {
+    if (!user || !params.id) return;
+    
+    try {
+      await supabase
+        .from('recently_viewed')
+        .upsert({
+          user_id: user.id,
+          product_id: params.id,
+          viewed_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,product_id'
+        });
+    } catch (error) {
+      console.error('Error tracking recently viewed:', error);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select(`
+          *,
+          users (name)
+        `)
+        .eq('product_id', params.id)
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        setReviews(data);
+      }
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    }
+  };
+
+  const submitReview = async () => {
+    if (!user || !newReview.comment.trim()) return;
+    
+    setSubmittingReview(true);
+    try {
+      const { error } = await supabase
+        .from('reviews')
+        .insert({
+          product_id: params.id,
+          user_id: user.id,
+          rating: newReview.rating,
+          comment: newReview.comment.trim()
+        });
+
+      if (!error) {
+        setNewReview({ rating: 5, comment: '' });
+        fetchReviews();
+      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const getAverageRating = () => {
+    if (reviews.length === 0) return 0;
+    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return (sum / reviews.length).toFixed(1);
   };
 
   const calculatePrice = () => {
@@ -141,12 +215,10 @@ export default function ProductDetailPage() {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <button
-          onClick={() => router.back()}
-          className="mb-6 text-blue-600 hover:text-blue-800 flex items-center"
-        >
-          ← Back to Products
-        </button>
+        <Breadcrumb items={[
+          { label: "Products", href: "/products" },
+          { label: product.name }
+        ]} />
 
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6">
@@ -324,6 +396,98 @@ export default function ProductDetailPage() {
                 }
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-8 bg-white rounded-lg shadow-lg p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Reviews</h2>
+            <div className="flex items-center space-x-2">
+              <span className="text-2xl font-bold text-yellow-500">{getAverageRating()}</span>
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span key={star} className={`text-xl ${
+                    star <= Math.round(parseFloat(getAverageRating())) ? 'text-yellow-500' : 'text-gray-300'
+                  }`}>
+                    ★
+                  </span>
+                ))}
+              </div>
+              <span className="text-gray-600">({reviews.length} reviews)</span>
+            </div>
+          </div>
+
+          {/* Add Review Form */}
+          <div className="mb-8 p-4 bg-gray-50 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4">Write a Review</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                <div className="flex space-x-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => setNewReview({...newReview, rating: star})}
+                      className={`text-2xl ${
+                        star <= newReview.rating ? 'text-yellow-500' : 'text-gray-300'
+                      }`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Comment</label>
+                <textarea
+                  value={newReview.comment}
+                  onChange={(e) => setNewReview({...newReview, comment: e.target.value})}
+                  className="w-full p-3 border rounded-lg"
+                  rows={3}
+                  placeholder="Share your thoughts about this product..."
+                />
+              </div>
+              <button
+                onClick={submitReview}
+                disabled={submittingReview || !newReview.comment.trim()}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {submittingReview ? 'Submitting...' : 'Submit Review'}
+              </button>
+            </div>
+          </div>
+
+          {/* Reviews List */}
+          <div className="space-y-4">
+            {reviews.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No reviews yet. Be the first to review this product!</p>
+            ) : (
+              reviews.map((review) => (
+                <div key={review.id} className="border-b pb-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-semibold">{review.users?.name || 'Anonymous'}</span>
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <span key={star} className={`text-sm ${
+                              star <= review.rating ? 'text-yellow-500' : 'text-gray-300'
+                            }`}>
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        {new Date(review.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-gray-700">{review.comment}</p>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
