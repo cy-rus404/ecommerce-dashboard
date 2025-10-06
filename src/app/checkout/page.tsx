@@ -215,13 +215,24 @@ export default function CheckoutPage() {
         }
       }
 
-      // Send SMS order confirmation to customer
-      if (formData.phone) {
+      // Send email order confirmation to customer
+      if (formData.notificationEmail) {
         try {
-          const { SMSService } = await import('../../../lib/smsService');
-          await SMSService.sendOrderConfirmation(formData.phone, newOrder.id, getFinalTotal());
+          const EmailJS = await import('@emailjs/browser');
+          const emailjs = EmailJS.default;
+          emailjs.init({ publicKey: 'FEIXpFEr5PuvhR_6g' });
+          
+          const message = `Order confirmed! #${newOrder.id} - Total: ₵${getFinalTotal().toFixed(2)}. We'll update you when it ships. Thank you!`;
+          
+          await emailjs.send('service_ls40okk', 'template_9enxem8', {
+            to_email: formData.notificationEmail,
+            message: message,
+            order_id: newOrder.id
+          });
+          
+          console.log('Order confirmation email sent to:', formData.notificationEmail);
         } catch (error) {
-          console.error('SMS notification error:', error);
+          console.error('Email notification error:', error);
         }
       }
 
