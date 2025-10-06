@@ -442,7 +442,7 @@ export default function ProductsPage() {
             {filteredProducts.map((product) => (
               <div 
                 key={product.id} 
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer flex flex-col h-full"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer flex flex-col h-full"
                 onClick={() => router.push(`/products/${product.id}`)}
               >
                 <div className="relative">
@@ -480,15 +480,15 @@ export default function ProductsPage() {
                 
                 <div className="p-4 flex flex-col flex-1">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900 truncate">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
                       {product.name}
                     </h3>
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                    <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">
                       {product.category}
                     </span>
                   </div>
                   
-                  <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-2 line-clamp-2">
                     {product.description}
                   </p>
                   
@@ -501,9 +501,9 @@ export default function ProductsPage() {
                         </span>
                       ))}
                     </div>
-                    <span className="text-xs text-gray-500">(4.0)</span>
-                    <span className="text-xs text-gray-400">•</span>
-                    <span className="text-xs text-gray-500">12 reviews</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">(4.0)</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">•</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">12 reviews</span>
                   </div>
                   
                   <div className="flex justify-between items-center mb-3">
@@ -514,10 +514,10 @@ export default function ProductsPage() {
                        new Date() <= new Date(product.discount_end_date) ? (
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">
-                            <span className="text-lg text-gray-500 line-through decoration-2 decoration-red-500">
+                            <span className="text-lg text-gray-500 dark:text-gray-400 line-through decoration-2 decoration-red-500">
                               ₵{parseFloat(product.price).toFixed(2)}
                             </span>
-                            <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded font-medium">
+                            <span className="text-xs bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 px-2 py-1 rounded font-medium">
                               SAVE ₵{(product.price * (product.discount_percentage / 100)).toFixed(2)}
                             </span>
                           </div>
@@ -526,15 +526,15 @@ export default function ProductsPage() {
                           </span>
                         </div>
                       ) : (
-                        <span className="text-2xl font-bold text-blue-600">
+                        <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                           ₵{parseFloat(product.price).toFixed(2)}
                         </span>
                       )}
                     </div>
                     <span className={`text-sm px-2 py-1 rounded ${
                       product.stock > 0 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
+                        ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' 
+                        : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
                     }`}>
                       {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
                     </span>
@@ -561,7 +561,7 @@ export default function ProductsPage() {
                         className={`p-2 rounded-lg transition ${
                           wishlist.includes(product.id)
                             ? 'bg-pink-600 text-white hover:bg-pink-700'
-                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                            : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                         }`}
                       >
                         {wishlistLoading === product.id ? (
