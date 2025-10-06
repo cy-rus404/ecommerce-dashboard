@@ -14,6 +14,9 @@ export default function OrderManagement() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
+  const [showBulkSMS, setShowBulkSMS] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -72,12 +75,19 @@ export default function OrderManagement() {
         
         // Send SMS notification to customer
         const order = orders.find(o => o.id === orderId);
+        console.log('Found order for SMS:', order);
+        console.log('Order phone:', order?.phone);
+        
         if (order && order.phone) {
           try {
+            console.log('Sending SMS to:', order.phone);
             await SMSService.sendOrderStatusUpdate(order.phone, orderId, newStatus);
           } catch (error) {
             console.error('SMS notification error:', error);
           }
+        } else {
+          console.log('No phone number found for order:', orderId);
+          alert('No phone number found for this order');
         }
         
         fetchOrders();
@@ -168,20 +178,33 @@ export default function OrderManagement() {
           {/* Orders List */}
           <div className="lg:col-span-2">
             <div className="bg-white shadow rounded-lg">
-              <div className="px-6 py-4 border-b flex justify-between items-center">
-                <h3 className="text-lg font-medium text-gray-900">Orders</h3>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">All Orders</option>
-                  <option value="pending">Pending</option>
-                  <option value="processing">Processing</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
+              <div className="px-6 py-4 border-b">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-lg font-medium text-gray-900">Orders</h3>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">All Orders</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+                {selectedOrders.length > 0 && (
+                  <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
+                    <span className="text-sm text-blue-800">{selectedOrders.length} orders selected</span>
+                    <button
+                      onClick={() => setShowBulkSMS(true)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
+                    >
+                      Send Bulk SMS
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
@@ -189,28 +212,45 @@ export default function OrderManagement() {
                   filteredOrders.map((order) => (
                     <div
                       key={order.id}
-                      className={`p-6 cursor-pointer hover:bg-gray-50 ${
+                      className={`p-6 hover:bg-gray-50 ${
                         selectedOrder?.id === order.id ? "bg-blue-50" : ""
+                      } ${
+                        selectedOrders.includes(order.id) ? "bg-green-50" : ""
                       }`}
-                      onClick={() => setSelectedOrder(order)}
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-900">
-                            Order #{order.id}
-                          </h4>
-                          <p className="text-sm text-gray-500">{order.customer_email}</p>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedOrders.includes(order.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedOrders([...selectedOrders, order.id]);
+                            } else {
+                              setSelectedOrders(selectedOrders.filter(id => id !== order.id));
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <div className="flex-1 cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-900">
+                                Order #{order.id}
+                              </h4>
+                              <p className="text-sm text-gray-500">{order.customer_email}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-medium text-gray-900">₵{order.total_amount}</p>
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                                {order.status}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center text-sm text-gray-500">
+                            <span>{order.order_items?.length || 0} items</span>
+                            <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-gray-900">₵{order.total_amount}</p>
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                            {order.status}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center text-sm text-gray-500">
-                        <span>{order.order_items?.length || 0} items</span>
-                        <span>{new Date(order.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
                   ))
@@ -328,6 +368,125 @@ export default function OrderManagement() {
             )}
           </div>
         </div>
+
+        {/* Bulk SMS Modal */}
+        {showBulkSMS && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+              <h3 className="text-lg font-semibold mb-4">Send Bulk Status Update</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Update status for {selectedOrders.length} selected orders
+              </p>
+              <select
+                value={bulkStatus}
+                onChange={(e) => setBulkStatus(e.target.value)}
+                className="w-full p-3 border rounded-lg mb-4"
+              >
+                <option value="">Select Status</option>
+                <option value="processing">Processing</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <div className="flex space-x-3 mt-4">
+                <button
+                  onClick={async () => {
+                    const selectedOrdersData = orders.filter(o => selectedOrders.includes(o.id) && o.phone);
+                    
+                    if (selectedOrdersData.length > 0 && bulkStatus) {
+                      // Update all order statuses in database
+                      for (const order of selectedOrdersData) {
+                        await supabase.from('orders').update({ 
+                          status: bulkStatus,
+                          updated_at: new Date().toISOString()
+                        }).eq('id', order.id);
+                      }
+                      
+                      // Format phone numbers for WhatsApp
+                      const phoneNumbers = selectedOrdersData.map(order => {
+                        let phone = order.phone.replace(/[^0-9]/g, '');
+                        if (phone.startsWith('0')) {
+                          phone = '233' + phone.substring(1);
+                        }
+                        return phone;
+                      });
+                      
+                      const broadcastMessage = `Orders have been ${bulkStatus.toUpperCase()}. ${bulkStatus === 'shipped' ? 'Your orders are on the way!' : bulkStatus === 'delivered' ? 'Delivered! Enjoy your purchases.' : 'We\'ll keep you updated.'}`;
+                      
+                      // Show broadcast instructions
+                      const notification_div = document.createElement('div');
+                      notification_div.className = 'fixed top-4 right-4 bg-blue-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-lg';
+                      notification_div.innerHTML = `
+                        <div class="mb-2">📢 WhatsApp Broadcast Ready</div>
+                        <div class="text-sm mb-3">Send to ${selectedOrdersData.length} customers via broadcast:</div>
+                        
+                        <div class="bg-white text-black p-3 rounded mb-3 text-sm">
+                          <strong>Message:</strong><br>
+                          ${broadcastMessage}
+                        </div>
+                        
+                        <div class="bg-white text-black p-3 rounded mb-3 text-xs max-h-32 overflow-y-auto">
+                          <strong>Phone Numbers:</strong><br>
+                          ${phoneNumbers.join(', ')}
+                        </div>
+                        
+                        <div class="text-xs mb-3 bg-yellow-100 text-yellow-800 p-2 rounded">
+                          <strong>Instructions:</strong><br>
+                          1. Copy the phone numbers above<br>
+                          2. Open WhatsApp → New Broadcast<br>
+                          3. Add these contacts to broadcast list<br>
+                          4. Send the message above
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                          <button onclick="navigator.clipboard.writeText('${phoneNumbers.join(', ')}'); this.innerText='Copied!'" class="flex-1 bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-sm">
+                            Copy Numbers
+                          </button>
+                          <button onclick="navigator.clipboard.writeText('${broadcastMessage}'); this.innerText='Copied!'" class="flex-1 bg-purple-500 hover:bg-purple-600 px-3 py-1 rounded text-sm">
+                            Copy Message
+                          </button>
+                        </div>
+                        
+                        <button onclick="this.parentElement.remove()" class="mt-2 w-full bg-gray-500 hover:bg-gray-600 px-3 py-1 rounded text-sm">
+                          Close
+                        </button>
+                      `;
+                      document.body.appendChild(notification_div);
+                      
+                      // Store in database
+                      await supabase.from('sms_notifications').insert([{
+                        recipient_phone: phoneNumbers.join(', '),
+                        message_content: broadcastMessage,
+                        notification_type: 'order_status_update',
+                        status: 'pending',
+                        sent_at: new Date().toISOString()
+                      }]);
+                      
+                      fetchOrders(); // Refresh orders
+                    }
+                    
+                    setShowBulkSMS(false);
+                    setBulkStatus("");
+                    setSelectedOrders([]);
+                  }}
+                  disabled={!bulkStatus}
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  Update & Send Broadcast
+                </button>
+                <button
+                  onClick={() => {
+                    setShowBulkSMS(false);
+                    setBulkStatus("");
+                  }}
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

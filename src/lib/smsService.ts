@@ -12,32 +12,35 @@ export interface SMSNotification {
 }
 
 export class SMSService {
-  // Send SMS notification via Supabase Edge Function
+  // Send SMS notification directly
   static async sendSMS(notification: SMSNotification): Promise<boolean> {
     try {
-      const { data, error } = await supabase.functions.invoke('send-sms', {
-        body: {
-          phone: notification.to,
-          message: notification.message,
-          type: notification.type
-        }
-      });
+      // Store SMS in database
+      const { error } = await supabase
+        .from('sms_notifications')
+        .insert([{
+          recipient_phone: notification.to,
+          message_content: notification.message,
+          notification_type: notification.type,
+          status: 'pending',
+          sent_at: new Date().toISOString()
+        }]);
 
       if (error) {
-        console.error('Error calling SMS function:', error);
-        return false;
+        console.error('Error storing SMS:', error);
       }
 
-      console.log('SMS function response:', data);
+      // Format phone number for WhatsApp
+      let phone = notification.to.replace(/[^0-9]/g, '');
+      if (phone.startsWith('0')) {
+        phone = '233' + phone.substring(1); // Convert Ghana format
+      }
       
-      // Show WhatsApp popup with the URL from Supabase function
-      if (typeof window !== 'undefined' && data.whatsappUrl) {
+      const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(notification.message)}`;
+      
+      // Show WhatsApp popup
+      if (typeof window !== 'undefined') {
         try {
-          // Request notification permission
-          if (Notification.permission === 'default') {
-            await Notification.requestPermission();
-          }
-          
           // Show browser notification
           if (Notification.permission === 'granted') {
             new Notification('SMS Alert', {
@@ -52,7 +55,7 @@ export class SMSService {
           notification_div.innerHTML = `
             <div class="mb-2">📱 SMS Ready</div>
             <div class="text-sm mb-3">${notification.message}</div>
-            <a href="${data.whatsappUrl}" target="_blank" class="bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-sm">
+            <a href="${whatsappUrl}" target="_blank" class="bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-sm">
               Send via WhatsApp
             </a>
             <button onclick="this.parentElement.remove()" class="ml-2 bg-gray-500 hover:bg-gray-600 px-3 py-1 rounded text-sm">
@@ -61,12 +64,12 @@ export class SMSService {
           `;
           document.body.appendChild(notification_div);
           
-          // Auto-remove after 10 seconds
+          // Auto-remove after 15 seconds
           setTimeout(() => {
             if (document.body.contains(notification_div)) {
               document.body.removeChild(notification_div);
             }
-          }, 10000);
+          }, 15000);
         } catch (err) {
           console.error('Error showing notification:', err);
           alert('SMS: ' + notification.message);
