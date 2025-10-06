@@ -13,10 +13,12 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState<any>(null);
   const [cartCount, setCartCount] = useState(0);
+  const [addingToCart, setAddingToCart] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -40,6 +42,7 @@ export default function ProductsPage() {
 
   const fetchProducts = async () => {
     try {
+      setError(null);
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -47,14 +50,14 @@ export default function ProductsPage() {
 
       if (error) {
         console.error("Error fetching products:", error);
-        // Use empty array if table doesn't exist yet
+        setError("Failed to load products. Please try again.");
         setProducts([]);
       } else {
-        console.log("Products fetched:", data);
         setProducts(data || []);
       }
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error("Network error:", error);
+      setError("Network error. Please check your connection and try again.");
       setProducts([]);
     } finally {
       setLoading(false);
@@ -100,7 +103,37 @@ export default function ProductsPage() {
     router.push("/login");
   };
 
-  if (loading || !user) return <div className="p-8">Loading...</div>;
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center bg-white p-8 rounded-lg shadow">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => {
+              setLoading(true);
+              fetchProducts();
+            }}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">

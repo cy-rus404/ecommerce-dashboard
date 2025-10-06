@@ -14,12 +14,33 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const router = useRouter();
+
+  const validateForm = () => {
+    const errors: {[key: string]: string} = {};
+    
+    if (!email) errors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(email)) errors.email = "Invalid email format";
+    
+    if (!password) errors.password = "Password is required";
+    else if (password.length < 6) errors.password = "Password must be at least 6 characters";
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   //Handle OAuth login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      setError("Please fix the errors below.");
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     
@@ -29,7 +50,13 @@ export default function LoginPage() {
     });
     
     if (error) {
-      setError(error.message);
+      if (error.message.includes('Invalid login credentials')) {
+        setError('Invalid email or password. Please check your credentials and try again.');
+      } else if (error.message.includes('Email not confirmed')) {
+        setError('Please check your email and click the confirmation link before signing in.');
+      } else {
+        setError(error.message);
+      }
     } else {
       // Check if user is admin
       const isAdmin = await AdminAuth.isAdmin(email);
@@ -58,8 +85,19 @@ export default function LoginPage() {
 
   //Social Login
   const handleSocialLogin = async (provider: "google" | "github") => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider });
-    if (error) setError(error.message);
+    setSocialLoading(provider);
+    setError(null);
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({ provider });
+      if (error) {
+        setError(`Failed to sign in with ${provider}. Please try again.`);
+      }
+    } catch (err) {
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setSocialLoading(null);
+    }
   };
 
 
@@ -71,24 +109,55 @@ export default function LoginPage() {
           Welcome Back
         </h1>
 
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+            <div className="flex items-center">
+              <span className="text-red-500 mr-2">⚠️</span>
+              {error}
+            </div>
+          </div>
+        )}
 
         {/*Email & Password*/}
         <form className="space-y-3 sm:space-y-4">
-          <input
-            type="email"
-            placeholder="Email"
-            className="w-full p-2 sm:p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full p-2 sm:p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div>
+            <input
+              type="email"
+              placeholder="Email"
+              className={`w-full p-2 sm:p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm sm:text-base ${
+                validationErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              }`}
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (validationErrors.email) {
+                  setValidationErrors({...validationErrors, email: ''});
+                }
+              }}
+            />
+            {validationErrors.email && (
+              <p className="text-red-500 text-sm mt-1">{validationErrors.email}</p>
+            )}
+          </div>
+          <div>
+            <input
+              type="password"
+              placeholder="Password"
+              className={`w-full p-2 sm:p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm sm:text-base ${
+                validationErrors.password ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              }`}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (validationErrors.password) {
+                  setValidationErrors({...validationErrors, password: ''});
+                }
+              }}
+            />
+            {validationErrors.password && (
+              <p className="text-red-500 text-sm mt-1">{validationErrors.password}</p>
+            )}
+          </div>
 
           <div className="flex justify-between items-center text-sm">
             <a href="#" className="text-blue-600 hover:underline">
@@ -100,10 +169,17 @@ export default function LoginPage() {
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <button
               onClick={handleLogin}
-              disabled={loading}
-              className="w-full sm:w-1/2 bg-blue-600 text-white py-2 sm:py-3 rounded-lg hover:bg-blue-700 transition text-sm sm:text-base"
+              disabled={loading || socialLoading}
+              className="w-full sm:w-1/2 bg-blue-600 text-white py-2 sm:py-3 rounded-lg hover:bg-blue-700 transition text-sm sm:text-base disabled:opacity-50 flex items-center justify-center"
             >
-              {loading ? "..." : "Sign In"}
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Signing In...
+                </>
+              ) : (
+                "Sign In"
+              )}
             </button>
             <button
               type="button"
@@ -125,14 +201,24 @@ export default function LoginPage() {
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 justify-center">
           <button
             onClick={() => handleSocialLogin("google")}
-            className="flex items-center justify-center gap-2 border px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm sm:text-base w-full sm:w-auto">
-              <FaGoogle className="text-red-500"/>
+            disabled={loading || socialLoading}
+            className="flex items-center justify-center gap-2 border px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm sm:text-base w-full sm:w-auto disabled:opacity-50">
+              {socialLoading === 'google' ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+              ) : (
+                <FaGoogle className="text-red-500"/>
+              )}
               Google
             </button>
             <button
             onClick={() => handleSocialLogin('github')}
-            className="flex items-center justify-center gap-2 border px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm sm:text-base w-full sm:w-auto">
-              <FaGithub className="text-gray-700" />
+            disabled={loading || socialLoading}
+            className="flex items-center justify-center gap-2 border px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm sm:text-base w-full sm:w-auto disabled:opacity-50">
+              {socialLoading === 'github' ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+              ) : (
+                <FaGithub className="text-gray-700" />
+              )}
               Github
             </button>
         </div>

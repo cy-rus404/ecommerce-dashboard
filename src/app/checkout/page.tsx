@@ -12,6 +12,8 @@ export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const [user, setUser] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [formData, setFormData] = useState({
@@ -114,8 +116,35 @@ export default function CheckoutPage() {
     setDeliveryFee(zone ? parseFloat(zone.delivery_fee) : 0);
   };
 
+  const validateForm = () => {
+    const errors: {[key: string]: string} = {};
+    
+    if (!formData.email) errors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) errors.email = "Invalid email format";
+    
+    if (!formData.phone) errors.phone = "Phone number is required";
+    if (!formData.address) errors.address = "Address is required";
+    if (!formData.city) errors.city = "City is required";
+    if (!formData.deliveryZone) errors.deliveryZone = "Please select a delivery zone";
+    
+    if (paymentMethod === "card") {
+      if (!formData.cardNumber) errors.cardNumber = "Card number is required";
+      if (!formData.expiryDate) errors.expiryDate = "Expiry date is required";
+      if (!formData.cvv) errors.cvv = "CVV is required";
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const processPayment = async () => {
+    if (!validateForm()) {
+      setError("Please fill in all required fields correctly.");
+      return;
+    }
+    
     setProcessing(true);
+    setError(null);
     
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -174,11 +203,19 @@ export default function CheckoutPage() {
         .delete()
         .eq('user_id', user.id);
 
-      alert('Payment successful! Order placed.');
-      router.push('/my-orders');
+      // Show success message
+      const successDiv = document.createElement('div');
+      successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50';
+      successDiv.innerHTML = '✓ Payment successful! Redirecting to your orders...';
+      document.body.appendChild(successDiv);
+      
+      setTimeout(() => {
+        document.body.removeChild(successDiv);
+        router.push('/my-orders');
+      }, 2000);
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('Error processing order. Please try again.');
+      setError('Failed to process your order. Please try again or contact support if the problem persists.');
     } finally {
       setProcessing(false);
     }
@@ -246,31 +283,60 @@ export default function CheckoutPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Payment Details</h2>
             
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+                <div className="flex items-center">
+                  <span className="text-red-500 mr-2">⚠️</span>
+                  {error}
+                </div>
+              </div>
+            )}
+            
             <form className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
+                  Email *
                 </label>
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full p-3 border rounded-lg"
+                  onChange={(e) => {
+                    setFormData({...formData, email: e.target.value});
+                    if (validationErrors.email) {
+                      setValidationErrors({...validationErrors, email: ''});
+                    }
+                  }}
+                  className={`w-full p-3 border rounded-lg ${
+                    validationErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
                   required
                 />
+                {validationErrors.email && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.email}</p>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone
+                  Phone *
                 </label>
                 <input
                   type="tel"
                   value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  className="w-full p-3 border rounded-lg"
+                  onChange={(e) => {
+                    setFormData({...formData, phone: e.target.value});
+                    if (validationErrors.phone) {
+                      setValidationErrors({...validationErrors, phone: ''});
+                    }
+                  }}
+                  className={`w-full p-3 border rounded-lg ${
+                    validationErrors.phone ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
                   required
                 />
+                {validationErrors.phone && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.phone}</p>
+                )}
               </div>
 
               <div>
@@ -399,10 +465,17 @@ export default function CheckoutPage() {
               <button
                 type="button"
                 onClick={processPayment}
-                disabled={processing || !formData.deliveryZone}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50"
+                disabled={processing || cartItems.length === 0}
+                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50 transition flex items-center justify-center"
               >
-                {processing ? "Processing Payment..." : `Pay ₵${getFinalTotal().toFixed(2)}`}
+                {processing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Processing Payment...
+                  </>
+                ) : (
+                  `Pay ₵${getFinalTotal().toFixed(2)}`
+                )}
               </button>
             </form>
           </div>
