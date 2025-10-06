@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { FaGoogle, FaGithub } from "react-icons/fa";
+
 import { useRouter } from "next/navigation";
 import { AdminAuth } from "../../lib/adminAuth";
 
@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [socialLoading, setSocialLoading] = useState<string | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const router = useRouter();
@@ -87,24 +87,7 @@ export default function LoginPage() {
     router.push("/signup");
   };
 
-  //Social Login
-  const handleSocialLogin = async (provider: "google" | "github") => {
-    setSocialLoading(provider);
-    setError(null);
-    
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({ provider });
-      if (error) {
-        console.error('Social login failed');
-        setError(`Failed to sign in with ${provider}. Please try again.`);
-      }
-    } catch (err) {
-      console.error('Social login error');
-      setError('Network error. Please check your connection and try again.');
-    } finally {
-      setSocialLoading(null);
-    }
-  };
+
 
 
 
@@ -173,16 +156,20 @@ export default function LoginPage() {
           </div>
 
           <div className="flex justify-between items-center text-sm">
-            <a href="#" className="text-blue-600 hover:underline">
+            <button
+              type="button"
+              onClick={() => router.push("/forgot-password")}
+              className="text-blue-600 hover:underline"
+            >
               Forgot Password?
-            </a>
+            </button>
           </div>
 
           {/*Sign in and Sign up buttons*/}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <button
               onClick={handleLogin}
-              disabled={loading || socialLoading}
+              disabled={loading}
               className="w-full sm:w-1/2 bg-blue-600 text-white py-2 sm:py-3 rounded-lg hover:bg-blue-700 transition text-sm sm:text-base disabled:opacity-50 flex items-center justify-center"
             >
               {loading ? (
@@ -204,37 +191,7 @@ export default function LoginPage() {
           </div>
         </form>
 
-        {/*Divider*/}
-        <div className="flex items-center my-6">
-            <div className="flex-grow border-t"></div>
-            <span className="px-2 text-gray-400 text-sm">or continue with</span>
-            <div className="flex-grow border-t"></div>
-        </div>
-        {/*Social Login*/}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 justify-center">
-          <button
-            onClick={() => handleSocialLogin("google")}
-            disabled={loading || socialLoading}
-            className="flex items-center justify-center gap-2 border px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm sm:text-base w-full sm:w-auto disabled:opacity-50">
-              {socialLoading === 'google' ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-              ) : (
-                <FaGoogle className="text-red-500"/>
-              )}
-              Google
-            </button>
-            <button
-            onClick={() => handleSocialLogin('github')}
-            disabled={loading || socialLoading}
-            className="flex items-center justify-center gap-2 border px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm sm:text-base w-full sm:w-auto disabled:opacity-50">
-              {socialLoading === 'github' ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-              ) : (
-                <FaGithub className="text-gray-700" />
-              )}
-              Github
-            </button>
-        </div>
+
       </div>
     </div>
   );
