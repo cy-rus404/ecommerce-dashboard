@@ -3,6 +3,21 @@ import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { SMSService } from "../../../lib/smsService";
+// Import EmailJS dynamically to avoid SSR issues
+let emailjs: any = null;
+
+// Initialize EmailJS on client side
+if (typeof window !== 'undefined') {
+  import('@emailjs/browser').then((EmailJS) => {
+    emailjs = EmailJS.default;
+    emailjs.init({
+      publicKey: 'FEIXpFEr5PuvhR_6g'
+    });
+    console.log('EmailJS loaded and initialized');
+  }).catch((error) => {
+    console.error('EmailJS import error:', error);
+  });
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -73,21 +88,32 @@ export default function OrderManagement() {
       } else {
         console.log('Order status updated successfully');
         
-        // Send SMS notification to customer
+        // Send email notification to customer
         const order = orders.find(o => o.id === orderId);
-        console.log('Found order for SMS:', order);
-        console.log('Order phone:', order?.phone);
+        console.log('Found order for email:', order);
         
-        if (order && order.phone) {
+        if (order && order.customer_email) {
           try {
-            console.log('Sending SMS to:', order.phone);
-            await SMSService.sendOrderStatusUpdate(order.phone, orderId, newStatus);
+            if (!emailjs) {
+              const EmailJS = await import('@emailjs/browser');
+              emailjs = EmailJS.default;
+              emailjs.init({ publicKey: 'FEIXpFEr5PuvhR_6g' });
+            }
+            
+            const message = `Your order #${orderId} has been ${newStatus.toUpperCase()}. ${newStatus === 'shipped' ? 'Your order is on the way!' : newStatus === 'delivered' ? 'Delivered! Enjoy your purchase.' : 'We\'ll keep you updated.'}`;
+            
+            await emailjs.send('service_ls40okk', 'template_9enxem8', {
+              to_email: order.customer_email,
+              message: message,
+              order_id: orderId
+            });
+            
+            console.log('Email sent to:', order.customer_email);
           } catch (error) {
-            console.error('SMS notification error:', error);
+            console.error('Email notification error:', error);
           }
         } else {
-          console.log('No phone number found for order:', orderId);
-          alert('No phone number found for this order');
+          console.log('No email found for order:', orderId);
         }
         
         fetchOrders();
@@ -197,12 +223,38 @@ export default function OrderManagement() {
                 {selectedOrders.length > 0 && (
                   <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
                     <span className="text-sm text-blue-800">{selectedOrders.length} orders selected</span>
-                    <button
-                      onClick={() => setShowBulkSMS(true)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
-                    >
-                      Send Bulk SMS
-                    </button>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={async () => {
+                          try {
+                            if (!emailjs) {
+                              const EmailJS = await import('@emailjs/browser');
+                              emailjs = EmailJS.default;
+                              emailjs.init({ publicKey: 'FEIXpFEr5PuvhR_6g' });
+                            }
+                            const result = await emailjs.send('service_ls40okk', 'template_9enxem8', {
+                              to_email: 'test@example.com',
+                              message: 'Test message',
+                              order_id: '999'
+                            });
+                            alert('Test email sent successfully!');
+                            console.log('Test result:', result);
+                          } catch (error) {
+                            alert('Test email failed: ' + JSON.stringify(error));
+                            console.error('Test error:', error);
+                          }
+                        }}
+                        className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700"
+                      >
+                        Test Email
+                      </button>
+                      <button
+                        onClick={() => setShowBulkSMS(true)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
+                      >
+                        Send Bulk SMS
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -402,65 +454,95 @@ export default function OrderManagement() {
                         }).eq('id', order.id);
                       }
                       
-                      // Format phone numbers for WhatsApp
-                      const phoneNumbers = selectedOrdersData.map(order => {
-                        let phone = order.phone.replace(/[^0-9]/g, '');
-                        if (phone.startsWith('0')) {
-                          phone = '233' + phone.substring(1);
+                      // Send real SMS using SMSGateway.me free tier
+                      let successCount = 0;
+                      let failCount = 0;
+                      
+                      // Show sending progress
+                      const progressDiv = document.createElement('div');
+                      progressDiv.className = 'fixed top-4 right-4 bg-blue-500 text-white p-4 rounded-lg shadow-lg z-50';
+                      progressDiv.innerHTML = `
+                        <div class="mb-2">📧 Sending Emails via EmailJS...</div>
+                        <div class="text-sm">Processing ${selectedOrdersData.length} messages</div>
+                      `;
+                      document.body.appendChild(progressDiv);
+                      
+                      for (const order of selectedOrdersData) {
+                        const message = `Your order #${order.id} has been ${bulkStatus.toUpperCase()}. ${bulkStatus === 'shipped' ? 'Your order is on the way!' : bulkStatus === 'delivered' ? 'Delivered! Enjoy your purchase.' : 'We\'ll keep you updated.'}`;
+                        
+                        // Check if we have customer email
+                        console.log('Order data:', order);
+                        console.log('Customer email:', order.customer_email);
+                        
+                        if (!order.customer_email) {
+                          failCount++;
+                          console.log('No email for order:', order.id);
+                          continue;
                         }
-                        return phone;
-                      });
+                        
+                        try {
+                          console.log('Attempting to send email to:', order.customer_email);
+                          
+                          if (!emailjs) {
+                            // Try to load EmailJS if not loaded
+                            const EmailJS = await import('@emailjs/browser');
+                            emailjs = EmailJS.default;
+                            emailjs.init({
+              publicKey: 'FEIXpFEr5PuvhR_6g'
+            });
+                          }
+                          
+                          // Test with minimal data first
+                          console.log('Testing EmailJS with:', {
+                            service: 'service_ls40okk',
+                            template: 'template_9enxem8',
+                            email: order.customer_email
+                          });
+                          
+                          const result = await emailjs.send(
+                            'service_ls40okk',
+                            'template_9enxem8',
+                            {
+                              to_email: order.customer_email,
+                              message: 'Test message',
+                              order_id: '123'
+                            }
+                          );
+                          
+                          console.log('EmailJS success:', result);
+                          successCount++;
+                          
+                        } catch (error) {
+                          failCount++;
+                          console.error('EmailJS error:', error);
+                        }
+                        
+                        // Small delay between messages
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                      }
                       
-                      const broadcastMessage = `Orders have been ${bulkStatus.toUpperCase()}. ${bulkStatus === 'shipped' ? 'Your orders are on the way!' : bulkStatus === 'delivered' ? 'Delivered! Enjoy your purchases.' : 'We\'ll keep you updated.'}`;
+                      // Remove progress and show results
+                      document.body.removeChild(progressDiv);
                       
-                      // Show broadcast instructions
                       const notification_div = document.createElement('div');
-                      notification_div.className = 'fixed top-4 right-4 bg-blue-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-lg';
+                      notification_div.className = 'fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50';
                       notification_div.innerHTML = `
-                        <div class="mb-2">📢 WhatsApp Broadcast Ready</div>
-                        <div class="text-sm mb-3">Send to ${selectedOrdersData.length} customers via broadcast:</div>
-                        
-                        <div class="bg-white text-black p-3 rounded mb-3 text-sm">
-                          <strong>Message:</strong><br>
-                          ${broadcastMessage}
+                        <div class="mb-2">✓ EmailJS Results</div>
+                        <div class="text-sm">
+                          ✓ ${successCount} emails sent successfully<br>
+                          ${failCount > 0 ? `✗ ${failCount} emails failed` : ''}
                         </div>
-                        
-                        <div class="bg-white text-black p-3 rounded mb-3 text-xs max-h-32 overflow-y-auto">
-                          <strong>Phone Numbers:</strong><br>
-                          ${phoneNumbers.join(', ')}
-                        </div>
-                        
-                        <div class="text-xs mb-3 bg-yellow-100 text-yellow-800 p-2 rounded">
-                          <strong>Instructions:</strong><br>
-                          1. Copy the phone numbers above<br>
-                          2. Open WhatsApp → New Broadcast<br>
-                          3. Add these contacts to broadcast list<br>
-                          4. Send the message above
-                        </div>
-                        
-                        <div class="flex space-x-2">
-                          <button onclick="navigator.clipboard.writeText('${phoneNumbers.join(', ')}'); this.innerText='Copied!'" class="flex-1 bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-sm">
-                            Copy Numbers
-                          </button>
-                          <button onclick="navigator.clipboard.writeText('${broadcastMessage}'); this.innerText='Copied!'" class="flex-1 bg-purple-500 hover:bg-purple-600 px-3 py-1 rounded text-sm">
-                            Copy Message
-                          </button>
-                        </div>
-                        
-                        <button onclick="this.parentElement.remove()" class="mt-2 w-full bg-gray-500 hover:bg-gray-600 px-3 py-1 rounded text-sm">
+                        <button onclick="this.parentElement.remove()" class="mt-2 bg-white text-green-500 px-3 py-1 rounded text-sm">
                           Close
                         </button>
                       `;
                       document.body.appendChild(notification_div);
                       
-                      // Store in database
-                      await supabase.from('sms_notifications').insert([{
-                        recipient_phone: phoneNumbers.join(', '),
-                        message_content: broadcastMessage,
-                        notification_type: 'order_status_update',
-                        status: 'pending',
-                        sent_at: new Date().toISOString()
-                      }]);
+                      setTimeout(() => {
+                        if (document.body.contains(notification_div)) {
+                          document.body.removeChild(notification_div);
+                        }
+                      }, 5000);
                       
                       fetchOrders(); // Refresh orders
                     }
@@ -472,7 +554,7 @@ export default function OrderManagement() {
                   disabled={!bulkStatus}
                   className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                  Update & Send Broadcast
+                  Update & Send SMS
                 </button>
                 <button
                   onClick={() => {

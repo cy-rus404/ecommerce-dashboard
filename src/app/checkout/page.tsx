@@ -18,6 +18,7 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [formData, setFormData] = useState({
     email: "",
+    notificationEmail: "",
     phone: "",
     address: "",
     city: "",
@@ -40,7 +41,11 @@ export default function CheckoutPage() {
       router.push('/login');
     } else {
       setUser(user);
-      setFormData(prev => ({ ...prev, email: user.email || "" }));
+      setFormData(prev => ({ 
+        ...prev, 
+        email: user.email || "",
+        notificationEmail: user.email || ""
+      }));
       fetchCartItems(user.id);
       fetchDeliveryZones();
     }
@@ -122,6 +127,9 @@ export default function CheckoutPage() {
     if (!formData.email) errors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(formData.email)) errors.email = "Invalid email format";
     
+    if (!formData.notificationEmail) errors.notificationEmail = "Notification email is required";
+    else if (!/\S+@\S+\.\S+/.test(formData.notificationEmail)) errors.notificationEmail = "Invalid notification email format";
+    
     if (!formData.phone) errors.phone = "Phone number is required";
     if (!formData.address) errors.address = "Address is required";
     if (!formData.city) errors.city = "City is required";
@@ -153,7 +161,7 @@ export default function CheckoutPage() {
       // Create order
       const orderData = {
         user_id: user.id,
-        customer_email: formData.email,
+        customer_email: formData.notificationEmail, // Use notification email for order updates
         total_amount: getFinalTotal(),
         delivery_fee: deliveryFee,
         status: 'pending',
@@ -333,6 +341,30 @@ export default function CheckoutPage() {
                 />
                 {validationErrors.email && (
                   <p className="text-red-500 text-sm mt-1">{validationErrors.email}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notification Email * <span className="text-sm text-gray-500">(for order updates)</span>
+                </label>
+                <input
+                  type="email"
+                  value={formData.notificationEmail}
+                  onChange={(e) => {
+                    setFormData({...formData, notificationEmail: e.target.value});
+                    if (validationErrors.notificationEmail) {
+                      setValidationErrors({...validationErrors, notificationEmail: ''});
+                    }
+                  }}
+                  className={`w-full p-3 border rounded-lg ${
+                    validationErrors.notificationEmail ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter your active email for order updates"
+                  required
+                />
+                {validationErrors.notificationEmail && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.notificationEmail}</p>
                 )}
               </div>
 
