@@ -168,25 +168,25 @@ export default function AddProduct() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <nav className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => router.push("/admin")}
-                className="text-blue-600 hover:text-blue-800"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
               >
                 ← Back to Dashboard
               </button>
-              <h1 className="text-lg sm:text-xl font-semibold text-gray-900">Add Product</h1>
+              <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Add Product</h1>
             </div>
           </div>
         </div>
       </nav>
 
       <main className="max-w-2xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           {error && (
             <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
               {typeof error === 'string' ? error : 'An error occurred'}
@@ -201,7 +201,7 @@ export default function AddProduct() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Product Name
               </label>
               <input
@@ -209,7 +209,7 @@ export default function AddProduct() {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 maxLength={100}
                 pattern="[a-zA-Z0-9\s\-_.,!?()]+"
                 title="Product name should contain only letters, numbers, and basic punctuation"
@@ -218,7 +218,7 @@ export default function AddProduct() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Description
               </label>
               <textarea
@@ -226,7 +226,7 @@ export default function AddProduct() {
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 maxLength={1000}
                 required
               />
@@ -234,7 +234,7 @@ export default function AddProduct() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Price (₵)
                 </label>
                 <input
@@ -245,13 +245,13 @@ export default function AddProduct() {
                   step="0.01"
                   min="0"
                   max="999999"
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Stock Quantity
                 </label>
                 <input
@@ -261,7 +261,7 @@ export default function AddProduct() {
                   onChange={handleChange}
                   min="0"
                   max="999999"
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   required
                 />
               </div>
@@ -269,14 +269,14 @@ export default function AddProduct() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Category
                 </label>
                 <select
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   required
                 >
                   <option value="">Select Category</option>
@@ -487,7 +487,7 @@ export default function AddProduct() {
 
             {/* Discount Section */}
             <div className="border-t pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Discount (Optional)</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Discount (Optional)</h3>
               
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
@@ -536,7 +536,7 @@ export default function AddProduct() {
 
               {formData.discount_percentage && formData.price && (
                 <div className="mt-3 p-3 bg-green-50 rounded-lg">
-                  <p className="text-sm text-green-800">
+                  <p className="text-sm text-green-800 dark:text-green-300">
                     Discounted Price: ₵{(parseFloat(formData.price) * (1 - parseFloat(formData.discount_percentage) / 100)).toFixed(2)}
                   </p>
                 </div>

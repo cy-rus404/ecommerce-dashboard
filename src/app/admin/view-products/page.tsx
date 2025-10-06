@@ -176,18 +176,18 @@ export default function ViewProducts() {
   if (loading) return <div className="p-8">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <nav className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => router.push("/admin")}
-                className="text-blue-600 hover:text-blue-800"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
               >
                 ← Back to Dashboard
               </button>
-              <h1 className="text-lg sm:text-xl font-semibold text-gray-900">View Products</h1>
+              <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">View Products</h1>
             </div>
           </div>
         </div>
@@ -195,27 +195,27 @@ export default function ViewProducts() {
 
       <main className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-gray-500">Total Products</h3>
-            <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Products</h3>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-gray-500">In Stock</h3>
-            <p className="text-2xl font-bold text-green-600">{stats.inStock}</p>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">In Stock</h3>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.inStock}</p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-gray-500">Out of Stock</h3>
-            <p className="text-2xl font-bold text-red-600">{stats.outOfStock}</p>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Out of Stock</h3>
+            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.outOfStock}</p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-gray-500">Low Stock (≤5)</h3>
-            <p className="text-2xl font-bold text-yellow-600">{stats.lowStock}</p>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Low Stock (≤5)</h3>
+            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.lowStock}</p>
           </div>
         </div>
 
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="px-4 py-4 sm:px-6 border-b flex justify-between items-center">
-            <h2 className="text-lg font-medium text-gray-900">Products</h2>
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+          <div className="px-4 py-4 sm:px-6 border-b dark:border-gray-700 flex justify-between items-center">
+            <h2 className="text-lg font-medium text-gray-900 dark:text-white">Products</h2>
             <div className="flex space-x-2">
               <button
                 onClick={() => EmailService.checkAndSendLowStockAlerts()}
@@ -232,7 +232,7 @@ export default function ViewProducts() {
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="p-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="all">All Products</option>
                 <option value="in-stock">In Stock</option>
@@ -244,20 +244,20 @@ export default function ViewProducts() {
 
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Discount</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Product</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Category</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Price</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Stock</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Discount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50">
+                  <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {product.image_urls && product.image_urls.length > 0 && (
@@ -275,24 +275,24 @@ export default function ViewProducts() {
                           </div>
                         )}
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                          <div className="text-sm text-gray-500 truncate max-w-xs">{product.description}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{product.name}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">{product.description}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                       {product.category}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                       {product.discount_percentage && 
                        new Date() >= new Date(product.discount_start_date) && 
                        new Date() <= new Date(product.discount_end_date) ? (
                         <div>
-                          <span className="line-through text-gray-500">₵{product.price}</span>
+                          <span className="line-through text-gray-500 dark:text-gray-400">₵{product.price}</span>
                           <span className="text-red-600 font-bold ml-1">
                             ₵{(product.price * (1 - product.discount_percentage / 100)).toFixed(2)}
                           </span>
-                          <span className="text-xs bg-red-100 text-red-800 px-1 py-0.5 rounded ml-1">
+                          <span className="text-xs bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300 px-1 py-0.5 rounded ml-1">
                             {product.discount_percentage}% OFF
                           </span>
                         </div>
@@ -305,7 +305,7 @@ export default function ViewProducts() {
                         type="number"
                         value={product.stock}
                         onChange={(e) => updateStock(product.id, parseInt(e.target.value) || 0)}
-                        className="w-16 p-1 border rounded text-sm"
+                        className="w-16 p-1 border dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         min="0"
                       />
                     </td>
@@ -325,13 +325,13 @@ export default function ViewProducts() {
                             type="date"
                             value={discountData.discount_start_date}
                             onChange={(e) => setDiscountData({...discountData, discount_start_date: e.target.value})}
-                            className="w-full p-1 border rounded text-xs"
+                            className="w-full p-1 border dark:border-gray-600 rounded text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           />
                           <input
                             type="date"
                             value={discountData.discount_end_date}
                             onChange={(e) => setDiscountData({...discountData, discount_end_date: e.target.value})}
-                            className="w-full p-1 border rounded text-xs"
+                            className="w-full p-1 border dark:border-gray-600 rounded text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           />
                           <div className="flex space-x-1">
                             <button
@@ -352,15 +352,15 @@ export default function ViewProducts() {
                         <div>
                           {product.discount_percentage ? (
                             <div className="text-xs">
-                              <span className="bg-red-100 text-red-800 px-2 py-1 rounded">
+                              <span className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300 px-2 py-1 rounded">
                                 {product.discount_percentage}% OFF
                               </span>
-                              <div className="text-gray-500 mt-1">
+                              <div className="text-gray-500 dark:text-gray-400 mt-1">
                                 {product.discount_start_date} to {product.discount_end_date}
                               </div>
                             </div>
                           ) : (
-                            <span className="text-gray-400 text-xs">No discount</span>
+                            <span className="text-gray-400 dark:text-gray-500 text-xs">No discount</span>
                           )}
                         </div>
                       )}
@@ -368,10 +368,10 @@ export default function ViewProducts() {
                     <td className="px-4 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         product.stock === 0 
-                          ? 'bg-red-100 text-red-800' 
+                          ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300' 
                           : product.stock <= 5 
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-green-100 text-green-800'
+                          ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300'
+                          : 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
                       }`}>
                         {product.stock === 0 ? 'Out of Stock' : product.stock <= 5 ? 'Low Stock' : 'In Stock'}
                       </span>
@@ -409,7 +409,7 @@ export default function ViewProducts() {
           </div>
 
           {filteredProducts.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               No products found
             </div>
           )}

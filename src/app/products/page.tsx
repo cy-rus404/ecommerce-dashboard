@@ -213,7 +213,7 @@ export default function ProductsPage() {
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading products...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading products...</p>
         </div>
       </div>
     );
@@ -222,10 +222,10 @@ export default function ProductsPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center bg-white p-8 rounded-lg shadow">
+        <div className="text-center bg-white dark:bg-gray-800 p-8 rounded-lg shadow">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Something went wrong</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
           <button
             onClick={() => {
               setLoading(true);
@@ -241,11 +241,11 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center mb-4">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Products</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Products</h1>
             
             {/* Mobile Menu */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
@@ -295,7 +295,7 @@ export default function ProductsPage() {
             </div>
             
             {/* Welcome message - hidden on mobile */}
-            <div className="hidden lg:block text-gray-700 text-sm">
+            <div className="hidden lg:block text-gray-700 dark:text-gray-300 text-sm">
               Welcome, {user?.user_metadata?.name || user?.email}
             </div>
           </div>
@@ -307,7 +307,7 @@ export default function ProductsPage() {
               placeholder="Search products by name or description..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+              className="w-full p-3 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm sm:text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
             />
           </div>
           
@@ -316,7 +316,7 @@ export default function ProductsPage() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+              className="p-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="all">All Categories</option>
               <option value="electronics">Electronics</option>
@@ -331,7 +331,7 @@ export default function ProductsPage() {
             <select
               value={selectedGender}
               onChange={(e) => setSelectedGender(e.target.value)}
-              className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+              className="p-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="all">All Genders</option>
               <option value="men">Men</option>
@@ -343,7 +343,7 @@ export default function ProductsPage() {
             <select
               value={selectedSize}
               onChange={(e) => setSelectedSize(e.target.value)}
-              className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+              className="p-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="all">All Sizes</option>
               <option value="XS">XS</option>
@@ -362,7 +362,7 @@ export default function ProductsPage() {
             <select
               value={selectedColor}
               onChange={(e) => setSelectedColor(e.target.value)}
-              className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+              className="p-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="all">All Colors</option>
               <option value="Black">Black</option>
@@ -376,7 +376,7 @@ export default function ProductsPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+              className="p-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="newest">Newest First</option>
               <option value="price-low">Price: Low to High</option>
@@ -386,28 +386,28 @@ export default function ProductsPage() {
             </select>
             
             <div className="flex items-center space-x-2">
-              <span className="text-xs text-gray-600">₵</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">₵</span>
               <input
                 type="number"
                 placeholder="Min"
                 value={priceRange.min}
                 onChange={(e) => setPriceRange({...priceRange, min: parseInt(e.target.value) || 0})}
-                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-xs"
+                className="w-full p-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />
-              <span className="text-xs text-gray-400">-</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">-</span>
               <input
                 type="number"
                 placeholder="Max"
                 value={priceRange.max}
                 onChange={(e) => setPriceRange({...priceRange, max: parseInt(e.target.value) || 1000})}
-                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-xs"
+                className="w-full p-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />
             </div>
           </div>
           
           {/* Results Count */}
           <div className="flex justify-between items-center mb-4">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
               Showing {filteredProducts.length} of {products.length} products
             </span>
             <button
@@ -420,7 +420,7 @@ export default function ProductsPage() {
                 setSelectedGender("all");
                 setSortBy("newest");
               }}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
             >
               Clear All Filters
             </button>
@@ -433,7 +433,7 @@ export default function ProductsPage() {
 
         {filteredProducts.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">
+            <p className="text-gray-500 dark:text-gray-400 text-lg">
               {searchQuery ? `No products found for "${searchQuery}"` : "No products available"}
             </p>
           </div>

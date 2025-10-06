@@ -148,30 +148,30 @@ export default function OrderManagement() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'processing': return 'bg-blue-100 text-blue-800';
-      case 'shipped': return 'bg-purple-100 text-purple-800';
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'pending': return 'bg-yellow-600 text-white';
+      case 'processing': return 'bg-blue-600 text-white';
+      case 'shipped': return 'bg-purple-600 text-white';
+      case 'delivered': return 'bg-green-600 text-white';
+      case 'cancelled': return 'bg-red-600 text-white';
+      default: return 'bg-gray-600 text-white';
     }
   };
 
   if (loading) return <div className="p-8">Loading orders...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <nav className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => router.push("/admin")}
-                className="text-blue-600 hover:text-blue-800"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
               >
                 ← Back to Dashboard
               </button>
-              <h1 className="text-lg sm:text-xl font-semibold text-gray-900">Order Management</h1>
+              <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Order Management</h1>
             </div>
           </div>
         </div>
@@ -180,43 +180,43 @@ export default function OrderManagement() {
       <main className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
         {/* Order Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow text-center">
-            <p className="text-2xl font-bold text-gray-900">{orderStats.total}</p>
-            <p className="text-sm text-gray-500">Total Orders</p>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow text-center">
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{orderStats.total}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Total Orders</p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow text-center">
-            <p className="text-2xl font-bold text-yellow-600">{orderStats.pending}</p>
-            <p className="text-sm text-gray-500">Pending</p>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow text-center">
+            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{orderStats.pending}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Pending</p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow text-center">
-            <p className="text-2xl font-bold text-blue-600">{orderStats.processing}</p>
-            <p className="text-sm text-gray-500">Processing</p>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow text-center">
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{orderStats.processing}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Processing</p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow text-center">
-            <p className="text-2xl font-bold text-purple-600">{orderStats.shipped}</p>
-            <p className="text-sm text-gray-500">Shipped</p>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow text-center">
+            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{orderStats.shipped}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Shipped</p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow text-center">
-            <p className="text-2xl font-bold text-green-600">{orderStats.delivered}</p>
-            <p className="text-sm text-gray-500">Delivered</p>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow text-center">
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{orderStats.delivered}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Delivered</p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow text-center">
-            <p className="text-2xl font-bold text-red-600">{orderStats.cancelled}</p>
-            <p className="text-sm text-gray-500">Cancelled</p>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow text-center">
+            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{orderStats.cancelled}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Cancelled</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Orders List */}
           <div className="lg:col-span-2">
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-6 py-4 border-b">
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="px-6 py-4 border-b dark:border-gray-700">
                 <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-lg font-medium text-gray-900">Orders</h3>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Orders</h3>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="p-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="all">All Orders</option>
                     <option value="pending">Pending</option>
@@ -270,10 +270,10 @@ export default function OrderManagement() {
                   filteredOrders.map((order) => (
                     <div
                       key={order.id}
-                      className={`p-6 hover:bg-gray-50 ${
-                        selectedOrder?.id === order.id ? "bg-blue-50" : ""
+                      className={`p-6 hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                        selectedOrder?.id === order.id ? "bg-blue-50 dark:bg-blue-900" : ""
                       } ${
-                        selectedOrders.includes(order.id) ? "bg-green-50" : ""
+                        selectedOrders.includes(order.id) ? "bg-green-50 dark:bg-green-900" : ""
                       }`}
                     >
                       <div className="flex items-center space-x-3">

@@ -103,18 +103,18 @@ export default function ManageAdmins() {
 
   return (
     <AdminProtectedRoute>
-      <div className="min-h-screen bg-gray-100">
-        <nav className="bg-white shadow-sm border-b">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+        <nav className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center space-x-4">
                 <button
                   onClick={() => router.push("/admin")}
-                  className="text-blue-600 hover:text-blue-800"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                 >
                   ← Back to Dashboard
                 </button>
-                <h1 className="text-lg sm:text-xl font-semibold text-gray-900">Manage Admins</h1>
+                <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Manage Admins</h1>
               </div>
             </div>
           </div>
@@ -124,29 +124,29 @@ export default function ManageAdmins() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Admin List */}
             <div className="lg:col-span-2">
-              <div className="bg-white shadow rounded-lg">
-                <div className="px-6 py-4 border-b">
-                  <h3 className="text-lg font-medium text-gray-900">Admin Users</h3>
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div className="px-6 py-4 border-b dark:border-gray-700">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Admin Users</h3>
                 </div>
-                <div className="divide-y divide-gray-200">
+                <div className="divide-y divide-gray-200 dark:divide-gray-700">
                   {admins.map((admin) => (
                     <div key={admin.id} className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="text-sm font-medium text-gray-900">{admin.name}</h4>
-                          <p className="text-sm text-gray-500">{admin.email}</p>
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">{admin.name}</h4>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{admin.email}</p>
                           <div className="flex items-center space-x-2 mt-1">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               admin.role === 'super_admin' 
-                                ? 'bg-purple-100 text-purple-800' 
-                                : 'bg-blue-100 text-blue-800'
+                                ? 'bg-purple-600 text-white' 
+                                : 'bg-blue-600 text-white'
                             }`}>
                               {admin.role.replace('_', ' ')}
                             </span>
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               admin.is_active 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
+                                ? 'bg-green-600 text-white' 
+                                : 'bg-red-600 text-white'
                             }`}>
                               {admin.is_active ? 'Active' : 'Inactive'}
                             </span>
@@ -167,7 +167,7 @@ export default function ManageAdmins() {
                           )}
                         </div>
                       </div>
-                      <p className="text-xs text-gray-400 mt-2">
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
                         Created: {new Date(admin.created_at).toLocaleDateString()}
                         {admin.created_by && ` by ${admin.created_by}`}
                       </p>
@@ -178,9 +178,9 @@ export default function ManageAdmins() {
             </div>
 
             {/* Create Admin */}
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-6 py-4 border-b">
-                <h3 className="text-lg font-medium text-gray-900">Create New Admin</h3>
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="px-6 py-4 border-b dark:border-gray-700">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Create New Admin</h3>
               </div>
               <div className="p-6 space-y-4">
                 <input
@@ -188,19 +188,19 @@ export default function ManageAdmins() {
                   placeholder="Email"
                   value={newAdmin.email}
                   onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 />
                 <input
                   type="text"
                   placeholder="Full Name"
                   value={newAdmin.name}
                   onChange={(e) => setNewAdmin({ ...newAdmin, name: e.target.value })}
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 />
                 <select
                   value={newAdmin.role}
                   onChange={(e) => setNewAdmin({ ...newAdmin, role: e.target.value })}
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="admin">Admin</option>
                   <option value="super_admin">Super Admin</option>
@@ -211,7 +211,7 @@ export default function ManageAdmins() {
                 >
                   Create Admin
                 </button>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Note: New admin must create account with this email first
                 </p>
               </div>
