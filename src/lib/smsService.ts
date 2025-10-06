@@ -27,7 +27,7 @@ export class SMSService {
         }]);
 
       if (error) {
-        console.error('Error storing SMS:', error);
+        console.error('SMS storage failed');
       }
 
       // Format phone number for WhatsApp
@@ -52,16 +52,29 @@ export class SMSService {
           // Show notification with WhatsApp option
           const notification_div = document.createElement('div');
           notification_div.className = 'fixed top-4 right-4 bg-blue-500 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm';
-          notification_div.innerHTML = `
-            <div class="mb-2">📱 SMS Ready</div>
-            <div class="text-sm mb-3">${notification.message}</div>
-            <a href="${whatsappUrl}" target="_blank" class="bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-sm">
-              Send via WhatsApp
-            </a>
-            <button onclick="this.parentElement.remove()" class="ml-2 bg-gray-500 hover:bg-gray-600 px-3 py-1 rounded text-sm">
-              Close
-            </button>
-          `;
+          const messageDiv = document.createElement('div');
+          messageDiv.className = 'mb-2';
+          messageDiv.textContent = '📱 SMS Ready';
+          
+          const contentDiv = document.createElement('div');
+          contentDiv.className = 'text-sm mb-3';
+          contentDiv.textContent = notification.message;
+          
+          const whatsappLink = document.createElement('a');
+          whatsappLink.href = whatsappUrl;
+          whatsappLink.target = '_blank';
+          whatsappLink.className = 'bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-sm';
+          whatsappLink.textContent = 'Send via WhatsApp';
+          
+          const closeButton = document.createElement('button');
+          closeButton.className = 'ml-2 bg-gray-500 hover:bg-gray-600 px-3 py-1 rounded text-sm';
+          closeButton.textContent = 'Close';
+          closeButton.onclick = () => notification_div.remove();
+          
+          notification_div.appendChild(messageDiv);
+          notification_div.appendChild(contentDiv);
+          notification_div.appendChild(whatsappLink);
+          notification_div.appendChild(closeButton);
           document.body.appendChild(notification_div);
           
           // Auto-remove after 15 seconds
@@ -71,14 +84,14 @@ export class SMSService {
             }
           }, 15000);
         } catch (err) {
-          console.error('Error showing notification:', err);
-          alert('SMS: ' + notification.message);
+          console.error('Notification display failed');
+          alert('SMS notification ready');
         }
       }
 
       return true;
     } catch (error) {
-      console.error('Error sending SMS:', error);
+      console.error('SMS sending failed');
       return false;
     }
   }
@@ -137,7 +150,7 @@ export class SMSService {
         .lte('stock', 5);
 
       if (error) {
-        console.error('Error fetching low stock products:', error);
+        console.error('Failed to fetch low stock products');
         alert('Error fetching products');
         return;
       }
@@ -151,10 +164,10 @@ export class SMSService {
       const defaultPhone = '+233505719507';
       await this.sendLowStockAlert(defaultPhone, lowStockProducts);
 
-      console.log(`Low stock SMS alerts processed for ${lowStockProducts.length} products`);
+      console.log('Low stock SMS alerts processed successfully');
     } catch (error) {
-      console.error('Error checking low stock:', error);
-      alert('Error sending alerts: ' + error);
+      console.error('Low stock check failed');
+      alert('Error sending alerts. Please try again.');
     }
   }
 }

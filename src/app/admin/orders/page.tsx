@@ -1,8 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { SMSService } from "../../../lib/smsService";
+import { logger } from "../../../lib/logger";
+import { ORDER_STATUS, EMAIL_CONFIG, QUERY_LIMITS } from "../../../lib/constants";
 // Import EmailJS dynamically to avoid SSR issues
 let emailjs: any = null;
 
@@ -51,20 +53,24 @@ export default function OrderManagement() {
       const { data, error } = await supabase
         .from('orders')
         .select(`
-          *,
-          order_items (
-            *,
-            products (name, price, image_urls)
+          id, customer_email, total_amount, status, created_at, phone,
+          order_items!inner (
+            id, quantity, price,
+            products!inner (name, price, image_urls)
           )
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(QUERY_LIMITS.ORDERS_LIMIT);
 
       if (error) {
+        logger.error('Failed to fetch orders', { error: error.message });
         setOrders([]);
       } else {
+        logger.info('Orders fetched successfully', { count: data?.length || 0 });
         setOrders(data || []);
       }
     } catch (error) {
+      logger.error('Orders fetch error', { error });
       setOrders([]);
     } finally {
       setLoading(false);
@@ -126,19 +132,19 @@ export default function OrderManagement() {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
-    if (statusFilter === "all") return true;
-    return order.status === statusFilter;
-  });
+  const filteredOrders = useMemo(() => {
+    if (statusFilter === "all") return orders;
+    return orders.filter(order => order.status === statusFilter);
+  }, [orders, statusFilter]);
 
-  const orderStats = {
-    total: orders.length,
-    pending: orders.filter(o => o.status === 'pending').length,
-    processing: orders.filter(o => o.status === 'processing').length,
-    shipped: orders.filter(o => o.status === 'shipped').length,
-    delivered: orders.filter(o => o.status === 'delivered').length,
-    cancelled: orders.filter(o => o.status === 'cancelled').length
-  };
+  const orderStats = useMemo(() => {
+    const stats = { total: 0, pending: 0, processing: 0, shipped: 0, delivered: 0, cancelled: 0 };
+    orders.forEach(order => {
+      stats.total++;
+      stats[order.status as keyof typeof stats]++;
+    });
+    return stats;
+  }, [orders]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { logger } from "../../../lib/logger";
+import { VALIDATION_LIMITS } from "../../../lib/constants";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -124,21 +126,40 @@ export default function CheckoutPage() {
   const validateForm = () => {
     const errors: {[key: string]: string} = {};
     
+    // Email validation
     if (!formData.email) errors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) errors.email = "Invalid email format";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errors.email = "Invalid email format";
+    else if (formData.email.length > VALIDATION_LIMITS.EMAIL_MAX) errors.email = "Email too long";
     
+    // Notification email validation
     if (!formData.notificationEmail) errors.notificationEmail = "Notification email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.notificationEmail)) errors.notificationEmail = "Invalid notification email format";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.notificationEmail)) errors.notificationEmail = "Invalid notification email format";
+    else if (formData.notificationEmail.length > VALIDATION_LIMITS.EMAIL_MAX) errors.notificationEmail = "Email too long";
     
+    // Phone validation
     if (!formData.phone) errors.phone = "Phone number is required";
+    else if (!/^[+]?[0-9\s\-()]{10,15}$/.test(formData.phone)) errors.phone = "Invalid phone number format";
+    
+    // Address validation
     if (!formData.address) errors.address = "Address is required";
+    else if (formData.address.length > VALIDATION_LIMITS.ADDRESS_MAX) errors.address = "Address too long";
+    
+    // City validation
     if (!formData.city) errors.city = "City is required";
+    else if (formData.city.length > VALIDATION_LIMITS.CITY_MAX) errors.city = "City name too long";
+    
     if (!formData.deliveryZone) errors.deliveryZone = "Please select a delivery zone";
     
+    // Payment validation
     if (paymentMethod === "card") {
       if (!formData.cardNumber) errors.cardNumber = "Card number is required";
+      else if (!/^[0-9\s]{13,19}$/.test(formData.cardNumber.replace(/\s/g, ''))) errors.cardNumber = "Invalid card number";
+      
       if (!formData.expiryDate) errors.expiryDate = "Expiry date is required";
+      else if (!/^(0[1-9]|1[0-2])\/([0-9]{2})$/.test(formData.expiryDate)) errors.expiryDate = "Invalid expiry date (MM/YY)";
+      
       if (!formData.cvv) errors.cvv = "CVV is required";
+      else if (!/^[0-9]{3,4}$/.test(formData.cvv)) errors.cvv = "Invalid CVV";
     }
     
     setValidationErrors(errors);
@@ -169,7 +190,7 @@ export default function CheckoutPage() {
         phone: formData.phone
       };
 
-      console.log('Creating order with data:', orderData);
+      logger.info('Creating order', { userId: user.id, total: getFinalTotal() });
 
       const { data: newOrder, error: orderError } = await supabase
         .from('orders')
@@ -178,11 +199,11 @@ export default function CheckoutPage() {
         .single();
 
       if (orderError) {
-        console.error('Order creation error:', orderError);
+        logger.error('Order creation failed', { error: orderError.message });
         throw new Error('Failed to create order');
       }
 
-      console.log('Order created successfully:', newOrder);
+      logger.info('Order created successfully', { orderId: newOrder.id });
 
       // Create order items
       const orderItems = cartItems.map(item => ({
@@ -199,7 +220,7 @@ export default function CheckoutPage() {
         .insert(orderItems);
 
       if (itemsError) {
-        console.error('Order items creation error:', itemsError);
+        logger.error('Order items creation failed', { error: itemsError.message });
         throw new Error('Failed to create order items');
       }
 
@@ -211,7 +232,7 @@ export default function CheckoutPage() {
         });
         
         if (stockError) {
-          console.error('Stock reduction error:', stockError);
+          logger.error('Stock reduction failed', { productId: item.product_id, error: stockError.message });
         }
       }
 
@@ -230,9 +251,9 @@ export default function CheckoutPage() {
             order_id: newOrder.id
           });
           
-          console.log('Order confirmation email sent to:', formData.notificationEmail);
+          logger.info('Order confirmation email sent', { email: formData.notificationEmail });
         } catch (error) {
-          console.error('Email notification error:', error);
+          logger.error('Order confirmation email failed', { error });
         }
       }
 
@@ -253,7 +274,7 @@ export default function CheckoutPage() {
         router.push('/my-orders');
       }, 2000);
     } catch (error) {
-      console.error('Checkout error:', error);
+      logger.error('Checkout process failed', { error });
       setError('Failed to process your order. Please try again or contact support if the problem persists.');
     } finally {
       setProcessing(false);
@@ -348,6 +369,8 @@ export default function CheckoutPage() {
                   className={`w-full p-3 border rounded-lg ${
                     validationErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
+                  maxLength={100}
+                  autoComplete="email"
                   required
                 />
                 {validationErrors.email && (
@@ -372,6 +395,8 @@ export default function CheckoutPage() {
                     validationErrors.notificationEmail ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
                   placeholder="Enter your active email for order updates"
+                  maxLength={100}
+                  autoComplete="email"
                   required
                 />
                 {validationErrors.notificationEmail && (
@@ -395,6 +420,9 @@ export default function CheckoutPage() {
                   className={`w-full p-3 border rounded-lg ${
                     validationErrors.phone ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
+                  pattern="[+]?[0-9\s\-()]{10,15}"
+                  maxLength={15}
+                  autoComplete="tel"
                   required
                 />
                 {validationErrors.phone && (

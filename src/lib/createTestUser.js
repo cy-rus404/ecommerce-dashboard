@@ -8,10 +8,10 @@ const supabase = createClient(
 
 async function createTestUser() {
   const testUser = {
-    email: 'testuser@example.com',
-    password: 'testuser123',
-    name: 'John Doe',
-    phone: '+233123456789'
+    email: process.env.TEST_USER_EMAIL || 'testuser@example.com',
+    password: process.env.TEST_USER_PASSWORD || 'secure_random_password',
+    name: process.env.TEST_USER_NAME || 'Test User',
+    phone: process.env.TEST_USER_PHONE || '+233123456789'
   };
 
   const { data, error } = await supabase.auth.signUp({
@@ -28,11 +28,7 @@ async function createTestUser() {
   if (error) {
     console.error('Error creating test user:', error.message);
   } else {
-    console.log('Test user created successfully:');
-    console.log('Email:', testUser.email);
-    console.log('Password:', testUser.password);
-    console.log('Name:', testUser.name);
-    console.log('Phone:', testUser.phone);
+    console.log('Test user created successfully');
     console.log('User ID:', data.user?.id);
   }
 }

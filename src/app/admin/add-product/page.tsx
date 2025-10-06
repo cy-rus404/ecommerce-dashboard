@@ -1,5 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { logger } from "../../../lib/logger";
+import { VALIDATION_LIMITS } from "../../../lib/constants";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
@@ -41,9 +43,19 @@ export default function AddProduct() {
     checkAuth();
   }, [router]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    
+    // Input validation using constants
+    if (name === 'name' && value.length > VALIDATION_LIMITS.PRODUCT_NAME_MAX) return;
+    if (name === 'description' && value.length > VALIDATION_LIMITS.DESCRIPTION_MAX) return;
+    if (name === 'price' && (parseFloat(value) < 0 || parseFloat(value) > VALIDATION_LIMITS.PRICE_MAX)) return;
+    if (name === 'stock' && (parseInt(value) < 0 || parseInt(value) > VALIDATION_LIMITS.STOCK_MAX)) return;
+    if (name === 'brand' && value.length > VALIDATION_LIMITS.BRAND_MAX) return;
+    if (name === 'discount_percentage' && (parseFloat(value) < 0 || parseFloat(value) > 100)) return;
+    
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -67,7 +79,7 @@ export default function AddProduct() {
         .upload(filePath, file);
 
       if (error) {
-        console.error('Error uploading image:', error);
+        logger.error('Image upload failed', { fileName: file.name });
         throw error;
       }
 
@@ -88,12 +100,12 @@ export default function AddProduct() {
     setSuccess(false);
 
     try {
-      let imageUrls = [];
+      let imageUrls: string[] = [];
       
       if (imageFiles.length > 0) {
         setUploading(true);
         imageUrls = await uploadImages(imageFiles);
-        console.log('Images uploaded:', imageUrls);
+        console.log('Images uploaded successfully');
         setUploading(false);
       }
 
@@ -120,14 +132,14 @@ export default function AddProduct() {
         ]);
 
       if (error) {
-        console.error("Supabase insert error:", error);
-        if (error.message.includes('column') && error.message.includes('does not exist')) {
+        logger.error('Product creation failed', { error: error.message });
+        if (error.message?.includes('column') && error.message?.includes('does not exist')) {
           setError('Database needs to be updated. Please run the add-product-demographics.sql file in Supabase.');
         } else {
-          setError(error.message);
+          setError('Failed to add product. Please try again.');
         }
       } else {
-        console.log("Product added successfully:", data);
+        logger.info('Product created successfully', { productName: formData.name });
         setSuccess(true);
         setFormData({
           name: "",
@@ -147,8 +159,8 @@ export default function AddProduct() {
         setAvailableColors([]);
       }
     } catch (error) {
-      console.error("Error adding product:", error);
-      setError("Failed to add product");
+      logger.error('Product creation process failed', { error });
+      setError("Failed to add product. Please check your input and try again.");
     } finally {
       setLoading(false);
       setUploading(false);
@@ -177,7 +189,7 @@ export default function AddProduct() {
         <div className="bg-white shadow rounded-lg p-6">
           {error && (
             <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
+              {typeof error === 'string' ? error : 'An error occurred'}
             </div>
           )}
           
@@ -198,6 +210,9 @@ export default function AddProduct() {
                 value={formData.name}
                 onChange={handleChange}
                 className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                maxLength={100}
+                pattern="[a-zA-Z0-9\s\-_.,!?()]+"
+                title="Product name should contain only letters, numbers, and basic punctuation"
                 required
               />
             </div>
@@ -212,6 +227,7 @@ export default function AddProduct() {
                 onChange={handleChange}
                 rows={3}
                 className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                maxLength={1000}
                 required
               />
             </div>
@@ -228,6 +244,7 @@ export default function AddProduct() {
                   onChange={handleChange}
                   step="0.01"
                   min="0"
+                  max="999999"
                   className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -243,6 +260,7 @@ export default function AddProduct() {
                   value={formData.stock}
                   onChange={handleChange}
                   min="0"
+                  max="999999"
                   className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   required
                 />

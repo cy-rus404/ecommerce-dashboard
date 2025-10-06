@@ -50,12 +50,15 @@ export default function LoginPage() {
     });
     
     if (error) {
-      if (error.message.includes('Invalid login credentials')) {
+      console.error('Authentication failed');
+      if (error.message?.includes('Invalid login credentials')) {
         setError('Invalid email or password. Please check your credentials and try again.');
-      } else if (error.message.includes('Email not confirmed')) {
+      } else if (error.message?.includes('Email not confirmed')) {
         setError('Please check your email and click the confirmation link before signing in.');
+      } else if (error.message?.includes('Too many requests')) {
+        setError('Too many login attempts. Please wait a few minutes before trying again.');
       } else {
-        setError(error.message);
+        setError('Login failed. Please try again later.');
       }
     } else {
       // Check if user is admin
@@ -68,7 +71,8 @@ export default function LoginPage() {
           console.log('Admin session created');
           router.push("/admin");
         } else {
-          setError("Failed to create admin session");
+          console.error('Admin session creation failed');
+          setError("Authentication failed. Please try again.");
         }
       } else {
         // Regular user
@@ -91,9 +95,11 @@ export default function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({ provider });
       if (error) {
+        console.error('Social login failed');
         setError(`Failed to sign in with ${provider}. Please try again.`);
       }
     } catch (err) {
+      console.error('Social login error');
       setError('Network error. Please check your connection and try again.');
     } finally {
       setSocialLoading(null);
@@ -134,6 +140,9 @@ export default function LoginPage() {
                   setValidationErrors({...validationErrors, email: ''});
                 }
               }}
+              maxLength={100}
+              autoComplete="email"
+              required
             />
             {validationErrors.email && (
               <p className="text-red-500 text-sm mt-1">{validationErrors.email}</p>
@@ -153,6 +162,10 @@ export default function LoginPage() {
                   setValidationErrors({...validationErrors, password: ''});
                 }
               }}
+              minLength={6}
+              maxLength={128}
+              autoComplete="current-password"
+              required
             />
             {validationErrors.password && (
               <p className="text-red-500 text-sm mt-1">{validationErrors.password}</p>
