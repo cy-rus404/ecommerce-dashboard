@@ -1,13 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import OptimizedImage from "../../components/OptimizedImage";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { TrialContext } from "../../lib/trialContext";
+import { TrialAuth } from "../../lib/trialAuth";
+import { supabase } from "../../lib/supabase";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -37,14 +34,48 @@ export default function ProductsPage() {
   }, [products, selectedCategory, searchQuery, priceRange, selectedSize, selectedColor, selectedGender, sortBy]);
 
   const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      router.push("/login");
-    } else {
-      setUser(user);
+    console.log('Products page: Checking auth...');
+    
+    // Check if in trial mode first
+    const trialToken = localStorage.getItem('trial_token');
+    const trialSession = localStorage.getItem('trial_session');
+    
+    console.log('Trial token:', trialToken);
+    console.log('Trial session:', trialSession);
+    
+    if (trialToken) {
+      console.log('Products page: Trial mode detected, creating mock user');
+      const mockUser = {
+        id: 'trial-user',
+        email: 'trial@demo.com',
+        user_metadata: { name: 'Trial User' }
+      };
+      setUser(mockUser);
       fetchProducts();
-      fetchCartCount(user.id);
-      fetchWishlist(user.id);
+      fetchCartCount('trial-user');
+      fetchWishlist('trial-user');
+      return;
+    }
+
+    console.log('Products page: No trial token, checking regular auth');
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      console.log('Regular auth user:', user);
+      console.log('Regular auth error:', error);
+      
+      if (!user) {
+        console.log('Products page: No user found, redirecting to login');
+        router.push("/login");
+      } else {
+        console.log('Products page: Regular user found, proceeding');
+        setUser(user);
+        fetchProducts();
+        fetchCartCount(user.id);
+        fetchWishlist(user.id);
+      }
+    } catch (error) {
+      console.error('Products page: Auth error:', error);
+      router.push("/login");
     }
   };
 
@@ -142,6 +173,11 @@ export default function ProductsPage() {
 
   const fetchCartCount = async (userId: string) => {
     try {
+      if (TrialContext.isTrialMode()) {
+        setCartCount(3); // Demo cart count
+        return;
+      }
+      
       const { count, error } = await supabase
         .from('cart')
         .select('*', { count: 'exact', head: true })
@@ -157,6 +193,11 @@ export default function ProductsPage() {
 
   const fetchWishlist = async (userId: string) => {
     try {
+      if (TrialContext.isTrialMode()) {
+        setWishlist([1, 3, 5]); // Demo wishlist items
+        return;
+      }
+      
       const { data, error } = await supabase
         .from('wishlist')
         .select('product_id')
@@ -177,6 +218,18 @@ export default function ProductsPage() {
     const isInWishlist = wishlist.includes(productId);
     
     try {
+      if (TrialContext.isTrialMode()) {
+        // Demo mode - just update local state
+        if (isInWishlist) {
+          setWishlist(wishlist.filter(id => id !== productId));
+          TrialContext.showTrialNotification('Removed from wishlist (demo)');
+        } else {
+          setWishlist([...wishlist, productId]);
+          TrialContext.showTrialNotification('Added to wishlist (demo)');
+        }
+        return;
+      }
+      
       if (isInWishlist) {
         const { error } = await supabase
           .from('wishlist')
@@ -204,8 +257,14 @@ export default function ProductsPage() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
+    const trialSession = localStorage.getItem('trial_session');
+    if (trialSession) {
+      localStorage.removeItem('trial_session');
+      router.push('/trial');
+    } else {
+      await supabase.auth.signOut();
+      router.push("/login");
+    }
   };
 
   if (loading || !user) {
@@ -543,6 +602,13 @@ export default function ProductsPage() {
                   <div className="mt-auto space-y-2">
                     <div className="flex gap-2">
                       <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (TrialContext.isTrialMode()) {
+                            setCartCount(prev => prev + 1);
+                            TrialContext.showTrialNotification('Added to cart (demo)');
+                          }
+                        }}
                         disabled={product.stock === 0}
                         className={`flex-1 py-2 px-4 rounded-lg font-medium transition ${
                           product.stock > 0

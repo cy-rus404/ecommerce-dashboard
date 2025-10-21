@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { EmailService } from "../../../lib/emailService";
 import { SMSService } from "../../../lib/smsService";
+import { UniversalAuth } from '../../../lib/universalAuth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,15 +24,13 @@ export default function ViewProducts() {
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/login");
-      } else {
+    const initAuth = async () => {
+      const authResult = await UniversalAuth.checkAuth(router);
+      if (authResult) {
         fetchProducts();
       }
     };
-    checkAuth();
+    initAuth();
   }, [router]);
 
   const fetchProducts = async () => {
@@ -57,6 +56,17 @@ export default function ViewProducts() {
   };
 
   const updateStock = async (productId: number, newStock: number) => {
+    if (UniversalAuth.isTrialMode()) {
+      // Demo mode - just update local state
+      setProducts(prev => prev.map(p => p.id === productId ? {...p, stock: newStock} : p));
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm';
+      notification.textContent = '🔄 Stock updated in demo mode';
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('products')
@@ -84,6 +94,17 @@ export default function ViewProducts() {
 
   const deleteProduct = async (productId: number) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
+
+    if (UniversalAuth.isTrialMode()) {
+      // Demo mode - just remove from local state
+      setProducts(prev => prev.filter(p => p.id !== productId));
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm';
+      notification.textContent = '🔄 Product deleted in demo mode';
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+      return;
+    }
 
     try {
       const { error } = await supabase

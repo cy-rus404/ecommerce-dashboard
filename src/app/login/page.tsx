@@ -163,6 +163,13 @@ export default function LoginPage() {
             >
               Forgot Password?
             </button>
+            <button
+              type="button"
+              onClick={() => router.push("/trial")}
+              className="text-green-600 hover:underline"
+            >
+              Trial Access
+            </button>
           </div>
 
           {/*Sign in and Sign up buttons*/}
