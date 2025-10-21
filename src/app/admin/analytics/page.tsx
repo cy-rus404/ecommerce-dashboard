@@ -106,7 +106,7 @@ export default function Analytics() {
         .slice(0, 5) || [];
 
       // Category statistics
-      const categoryStats = products?.reduce((acc, product) => {
+      const categoryStats = products?.reduce((acc: Record<string, any>, product) => {
         const category = product.category || 'Other';
         if (!acc[category]) {
           acc[category] = { name: category, count: 0, avgPrice: 0 };
@@ -114,7 +114,7 @@ export default function Analytics() {
         acc[category].count += 1;
         acc[category].avgPrice = (acc[category].avgPrice + product.price) / acc[category].count;
         return acc;
-      }, {}) || {};
+      }, {} as Record<string, any>) || {};
 
       // Stock alerts (low stock products)
       const stockAlerts = products?.filter(product => product.stock <= 5 && product.stock > 0) || [];
@@ -162,20 +162,20 @@ export default function Analytics() {
       }).reverse();
       
       // Order status breakdown
-      const orderStats = ordersData?.reduce((acc, order) => {
+      const orderStats = ordersData?.reduce((acc: Record<string, number>, order) => {
         acc[order.status] = (acc[order.status] || 0) + 1;
         return acc;
-      }, {}) || {};
+      }, {} as Record<string, number>) || {};
       
       // Top customers by spending
-      const customerSpending = ordersData?.reduce((acc, order) => {
+      const customerSpending = ordersData?.reduce((acc: Record<string, any>, order) => {
         if (!acc[order.customer_email]) {
           acc[order.customer_email] = { email: order.customer_email, total: 0, orders: 0 };
         }
         acc[order.customer_email].total += parseFloat(order.total_amount);
         acc[order.customer_email].orders += 1;
         return acc;
-      }, {}) || {};
+      }, {} as Record<string, any>) || {};
       
       const topCustomers = Object.values(customerSpending)
         .sort((a: any, b: any) => b.total - a.total)
