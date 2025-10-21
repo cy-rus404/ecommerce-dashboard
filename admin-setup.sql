@@ -1,84 +1,26 @@
 -- Admin and Demo User Setup for E-commerce Dashboard
--- Run this in Supabase SQL Editor
+-- IMPORTANT: Create users through Supabase Dashboard instead of SQL
 
--- Create admin user (skip if exists)
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'admin@ecommerce.com') THEN
-    INSERT INTO auth.users (
-      instance_id,
-      id,
-      aud,
-      role,
-      email,
-      encrypted_password,
-      email_confirmed_at,
-      created_at,
-      updated_at,
-      confirmation_token,
-      email_change,
-      email_change_token_new,
-      recovery_token
-    ) VALUES (
-      '00000000-0000-0000-0000-000000000000',
-      gen_random_uuid(),
-      'authenticated',
-      'authenticated',
-      'admin@ecommerce.com',
-      crypt('admin123456', gen_salt('bf')),
-      NOW(),
-      NOW(),
-      NOW(),
-      '',
-      '',
-      '',
-      ''
-    );
-  END IF;
-END $$;
+-- Step 1: Go to Supabase Dashboard > Authentication > Users
+-- Step 2: Click "Add User" and create:
+--   Email: admin@ecommerce.com
+--   Password: admin123456
+--   Auto Confirm User: YES
 
--- Create demo user (skip if exists)
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'demo@example.com') THEN
-    INSERT INTO auth.users (
-      instance_id,
-      id,
-      aud,
-      role,
-      email,
-      encrypted_password,
-      email_confirmed_at,
-      created_at,
-      updated_at,
-      confirmation_token,
-      email_change,
-      email_change_token_new,
-      recovery_token
-    ) VALUES (
-      '00000000-0000-0000-0000-000000000000',
-      gen_random_uuid(),
-      'authenticated',
-      'authenticated',
-      'demo@example.com',
-      crypt('demo123456', gen_salt('bf')),
-      NOW(),
-      NOW(),
-      NOW(),
-      '',
-      '',
-      '',
-      ''
-    );
-  END IF;
-END $$;
+-- Step 3: Click "Add User" again and create:
+--   Email: demo@example.com  
+--   Password: demo123456
+--   Auto Confirm User: YES
 
--- Add demo user to demo_users table
-INSERT INTO demo_users (email, is_demo, created_at)
-SELECT 'demo@example.com', true, NOW()
-WHERE NOT EXISTS (SELECT 1 FROM demo_users WHERE email = 'demo@example.com');
+-- Step 4: Run this SQL to set up demo user in demo_users table:
 
--- Verify users were created
-SELECT email, created_at, email_confirmed_at 
-FROM auth.users 
-WHERE email IN ('admin@ecommerce.com', 'demo@example.com');
+-- Add name column to existing demo_users table if it doesn't exist
+ALTER TABLE demo_users ADD COLUMN IF NOT EXISTS name VARCHAR(255);
+
+-- Add demo user to demo_users table (with name)
+INSERT INTO demo_users (email, name, is_demo, created_at)
+VALUES ('demo@example.com', 'Demo User', true, NOW())
+ON CONFLICT (email) DO UPDATE SET name = 'Demo User';
+
+-- Verify setup
+SELECT 'Setup complete! Now create users manually in Supabase Dashboard.' as status;
