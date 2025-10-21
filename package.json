@@ -8,6 +8,8 @@
     "start": "next start",
     "create-admin": "node src/lib/createAdminUser.js",
     "create-test-user": "node src/lib/createTestUser.js",
+    "create-demo-user": "node create-demo-user.js",
+    "reset-demo": "node reset-demo-data.js",
 
     "test-oauth": "node test-oauth.js"
   },

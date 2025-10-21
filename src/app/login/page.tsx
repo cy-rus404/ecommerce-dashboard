@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import { useRouter } from "next/navigation";
 import { AdminAuth } from "../../lib/adminAuth";
+import { DemoAuth } from "../../lib/demoAuth";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -61,14 +62,27 @@ export default function LoginPage() {
         setError('Login failed. Please try again later.');
       }
     } else {
-      // Check if user is admin by email
-      if (email === 'admin@ecommerce.com') {
-        console.log('Admin user detected, redirecting to admin dashboard');
-        router.push("/admin");
-      } else {
-        // Regular user
-        console.log('Regular user, redirecting to products');
-        router.push("/products");
+      // Check if user is demo user
+      try {
+        const isDemoUser = await DemoAuth.isDemoUser(email);
+        if (isDemoUser) {
+          console.log('Demo user detected, redirecting to demo dashboard');
+          router.push("/demo/dashboard");
+        } else if (email === 'admin@ecommerce.com') {
+          console.log('Admin user detected, redirecting to admin dashboard');
+          router.push("/admin");
+        } else {
+          // Regular user
+          console.log('Regular user, redirecting to products');
+          router.push("/products");
+        }
+      } catch (error) {
+        console.log('Demo check failed, treating as regular user');
+        if (email === 'admin@ecommerce.com') {
+          router.push("/admin");
+        } else {
+          router.push("/products");
+        }
       }
     }
     setLoading(false);
@@ -77,6 +91,21 @@ export default function LoginPage() {
   //Navigate to Signup
   const handleSignupClick = () => {
     router.push("/signup");
+  };
+
+  // Handle demo login
+  const handleDemoLogin = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await DemoAuth.loginDemoUser();
+      router.push("/demo/dashboard");
+    } catch (err: any) {
+      setError("Demo user not set up yet. Please create demo user in Supabase first.");
+    }
+    
+    setLoading(false);
   };
 
 
@@ -179,6 +208,25 @@ export default function LoginPage() {
               className="w-full sm:w-1/2 bg-gray-800 text-white py-2 sm:py-3 rounded-lg hover:bg-gray-900 transition text-sm sm:text-base"
             >
               Sign Up
+            </button>
+          </div>
+          
+          {/* Demo button */}
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={handleDemoLogin}
+              disabled={loading}
+              className="w-full bg-orange-500 text-white py-2 sm:py-3 rounded-lg hover:bg-orange-600 transition text-sm sm:text-base disabled:opacity-50 flex items-center justify-center"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Loading Demo...
+                </>
+              ) : (
+                "🔄 Try Demo"
+              )}
             </button>
           </div>
         </form>

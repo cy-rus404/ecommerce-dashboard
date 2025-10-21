@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import { logger } from "../../../lib/logger";
+import { logger } from "../../lib/logger";
 import { VALIDATION_LIMITS } from "../../lib/constants";
 
 const supabase = createClient(
