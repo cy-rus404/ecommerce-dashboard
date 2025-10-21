@@ -75,7 +75,7 @@ export default function ProductDetailPage() {
         .from('recently_viewed')
         .upsert({
           user_id: user.id,
-          product_id: params.id,
+          product_id: String(params.id),
           viewed_at: new Date().toISOString()
         }, {
           onConflict: 'user_id,product_id'
@@ -93,7 +93,7 @@ export default function ProductDetailPage() {
           *,
           users (name)
         `)
-        .eq('product_id', params.id)
+        .eq('product_id', String(params.id))
         .order('created_at', { ascending: false });
 
       if (!error && data) {
@@ -112,7 +112,7 @@ export default function ProductDetailPage() {
       const { error } = await supabase
         .from('reviews')
         .insert({
-          product_id: params.id,
+          product_id: String(params.id),
           user_id: user.id,
           rating: newReview.rating,
           comment: newReview.comment.trim()

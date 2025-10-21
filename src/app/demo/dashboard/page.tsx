@@ -1,7 +1,13 @@
 "use client";
 import { useRouter } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
 import { DemoAuth } from "../../../lib/demoAuth";
 import { useEffect } from "react";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function DemoDashboard() {
   const router = useRouter();
@@ -13,8 +19,8 @@ export default function DemoDashboard() {
     }
   }, [router]);
 
-  const handleLogout = () => {
-    DemoAuth.setDemoSession(false);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     router.push('/login');
   };
 
