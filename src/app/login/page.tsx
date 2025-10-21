@@ -61,21 +61,13 @@ export default function LoginPage() {
         setError('Login failed. Please try again later.');
       }
     } else {
-      // Check if user is admin
-      const isAdmin = await AdminAuth.isAdmin(email);
-      
-      if (isAdmin) {
-        // Create admin session
-        const sessionToken = await AdminAuth.createSession(email);
-        if (sessionToken) {
-          console.log('Admin session created');
-          router.push("/admin");
-        } else {
-          console.error('Admin session creation failed');
-          setError("Authentication failed. Please try again.");
-        }
+      // Check if user is admin by email
+      if (email === 'admin@ecommerce.com') {
+        console.log('Admin user detected, redirecting to admin dashboard');
+        router.push("/admin");
       } else {
         // Regular user
+        console.log('Regular user, redirecting to products');
         router.push("/products");
       }
     }
@@ -162,13 +154,6 @@ export default function LoginPage() {
               className="text-blue-600 hover:underline"
             >
               Forgot Password?
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push("/trial")}
-              className="text-green-600 hover:underline"
-            >
-              Trial Access
             </button>
           </div>
 

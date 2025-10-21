@@ -50,7 +50,7 @@ $$ LANGUAGE plpgsql;
 After setting up the database, create trial users:
 
 ```bash
-npm run create-trial-user "Demo User" "demo@example.com" 30
+npm run create-trial-user "Demo User" "demo@example.com" 365
 ```
 
 ## 3. Usage

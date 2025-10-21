@@ -4,7 +4,6 @@ import { logger } from "../../../lib/logger";
 import { VALIDATION_LIMITS } from "../../../lib/constants";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import { UniversalAuth } from '../../../lib/universalAuth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,10 +34,13 @@ export default function AddProduct() {
   const router = useRouter();
 
   useEffect(() => {
-    const initAuth = async () => {
-      await UniversalAuth.checkAuth(router);
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/login");
+      }
     };
-    initAuth();
+    checkAuth();
   }, [router]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -98,38 +100,7 @@ export default function AddProduct() {
     setSuccess(false);
 
     try {
-      if (UniversalAuth.isTrialMode()) {
-        // Demo mode - simulate success
-        console.log('Add Product: Demo mode - simulating product creation');
-        setTimeout(() => {
-          setSuccess(true);
-          setFormData({
-            name: "",
-            description: "",
-            price: "",
-            stock: "",
-            category: "",
-            gender: "",
-            age_group: "",
-            brand: "",
-            discount_percentage: "",
-            discount_start_date: "",
-            discount_end_date: ""
-          });
-          setImageFiles([]);
-          setAvailableSizes([]);
-          setAvailableColors([]);
-          setLoading(false);
-          
-          // Show demo notification
-          const notification = document.createElement('div');
-          notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm';
-          notification.textContent = '🔄 Product added in demo mode - no real data was created';
-          document.body.appendChild(notification);
-          setTimeout(() => notification.remove(), 3000);
-        }, 1000);
-        return;
-      }
+
 
       let imageUrls: string[] = [];
       

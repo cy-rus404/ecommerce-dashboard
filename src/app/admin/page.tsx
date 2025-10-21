@@ -3,8 +3,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AdminProtectedRoute from "../../components/AdminProtectedRoute";
 import { AdminAuth } from "../../lib/adminAuth";
-import { TrialContext } from "../../lib/trialContext";
-import { TrialAuth } from "../../lib/trialAuth";
 import { supabase } from "../../lib/supabase";
 
 export default function AdminDashboard() {
@@ -18,49 +16,14 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const getUser = async () => {
-      console.log('Admin page: Checking auth...');
-      
-      // Check if in trial mode first
-      const trialToken = localStorage.getItem('trial_token');
-      const trialSession = localStorage.getItem('trial_session');
-      
-      console.log('Admin trial token:', trialToken);
-      console.log('Admin trial session:', trialSession);
-      
-      if (trialToken) {
-        console.log('Admin page: Trial mode detected, creating mock admin');
-        const mockUser = {
-          id: 'trial-admin',
-          email: 'trial-admin@demo.com',
-          user_metadata: { name: 'Trial Admin' }
-        };
-        setUser(mockUser);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/login");
+      } else {
+        setUser(user);
         await fetchUserCount();
         await fetchProductCount();
         await fetchOrderStats();
-        setLoading(false);
-        return;
-      }
-
-      console.log('Admin page: No trial token, checking regular auth');
-      try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        console.log('Admin regular auth user:', user);
-        console.log('Admin regular auth error:', error);
-        
-        if (!user) {
-          console.log('Admin page: No user found, redirecting to login');
-          router.push("/login");
-        } else {
-          console.log('Admin page: Regular user found, proceeding');
-          setUser(user);
-          await fetchUserCount();
-          await fetchProductCount();
-          await fetchOrderStats();
-        }
-      } catch (error) {
-        console.error('Admin page: Auth error:', error);
-        router.push("/login");
       }
       setLoading(false);
     };
@@ -102,50 +65,46 @@ export default function AdminDashboard() {
         .from('orders')
         .select('*', { count: 'exact', head: true });
       
+      if (error) {
+        console.log('Orders table not found, setting default values');
+        setOrderCount(0);
+        setTotalRevenue(0);
+        return;
+      }
+      
+      setOrderCount(count || 0);
+      
       const { data: revenueData, error: revenueError } = await supabase
         .from('orders')
         .select('total_amount')
         .eq('status', 'delivered');
       
-      if (error) {
-        console.error('Error fetching order count:', error);
-        setOrderCount(0);
-      } else {
-        console.log('Order count:', count);
-        setOrderCount(count || 0);
-      }
-      
       if (!revenueError && revenueData) {
         const revenue = revenueData.reduce((sum, order) => sum + parseFloat(order.total_amount), 0);
         setTotalRevenue(revenue);
-        console.log('Total revenue:', revenue);
+      } else {
+        setTotalRevenue(0);
       }
     } catch (error) {
-      console.error('Error fetching order stats:', error);
+      console.log('Error fetching order stats, using defaults');
       setOrderCount(0);
       setTotalRevenue(0);
     }
   };
 
   const handleLogout = async () => {
-    const trialSession = localStorage.getItem('trial_session');
-    if (trialSession) {
-      localStorage.removeItem('trial_session');
-      router.push('/trial');
-    } else {
-      const { token } = AdminAuth.getCurrentSession();
-      if (token) {
-        await AdminAuth.destroySession(token);
-      }
-      await supabase.auth.signOut();
-      router.push("/login");
+    const { token } = AdminAuth.getCurrentSession();
+    if (token) {
+      await AdminAuth.destroySession(token);
     }
+    await supabase.auth.signOut();
+    router.push("/login");
   };
 
   if (loading || !user) return <div>Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <nav className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">

@@ -8,7 +8,7 @@
     "start": "next start",
     "create-admin": "node src/lib/createAdminUser.js",
     "create-test-user": "node src/lib/createTestUser.js",
-    "create-trial-user": "node src/lib/createTrialUser.js",
+
     "test-oauth": "node test-oauth.js"
   },
   "dependencies": {

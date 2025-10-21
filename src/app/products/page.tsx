@@ -2,8 +2,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OptimizedImage from "../../components/OptimizedImage";
-import { TrialContext } from "../../lib/trialContext";
-import { TrialAuth } from "../../lib/trialAuth";
 import { supabase } from "../../lib/supabase";
 
 export default function ProductsPage() {
@@ -173,11 +171,6 @@ export default function ProductsPage() {
 
   const fetchCartCount = async (userId: string) => {
     try {
-      if (TrialContext.isTrialMode()) {
-        setCartCount(3); // Demo cart count
-        return;
-      }
-      
       const { count, error } = await supabase
         .from('cart')
         .select('*', { count: 'exact', head: true })
@@ -193,11 +186,6 @@ export default function ProductsPage() {
 
   const fetchWishlist = async (userId: string) => {
     try {
-      if (TrialContext.isTrialMode()) {
-        setWishlist([1, 3, 5]); // Demo wishlist items
-        return;
-      }
-      
       const { data, error } = await supabase
         .from('wishlist')
         .select('product_id')
@@ -218,18 +206,6 @@ export default function ProductsPage() {
     const isInWishlist = wishlist.includes(productId);
     
     try {
-      if (TrialContext.isTrialMode()) {
-        // Demo mode - just update local state
-        if (isInWishlist) {
-          setWishlist(wishlist.filter(id => id !== productId));
-          TrialContext.showTrialNotification('Removed from wishlist (demo)');
-        } else {
-          setWishlist([...wishlist, productId]);
-          TrialContext.showTrialNotification('Added to wishlist (demo)');
-        }
-        return;
-      }
-      
       if (isInWishlist) {
         const { error } = await supabase
           .from('wishlist')
@@ -602,13 +578,6 @@ export default function ProductsPage() {
                   <div className="mt-auto space-y-2">
                     <div className="flex gap-2">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (TrialContext.isTrialMode()) {
-                            setCartCount(prev => prev + 1);
-                            TrialContext.showTrialNotification('Added to cart (demo)');
-                          }
-                        }}
                         disabled={product.stock === 0}
                         className={`flex-1 py-2 px-4 rounded-lg font-medium transition ${
                           product.stock > 0
