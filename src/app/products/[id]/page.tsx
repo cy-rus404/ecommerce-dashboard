@@ -408,7 +408,7 @@ export default function ProductDetailPage() {
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <span key={star} className={`text-xl ${
-                    star <= Math.round(parseFloat(getAverageRating())) ? 'text-yellow-500' : 'text-gray-300'
+                    star <= Math.round(Number(getAverageRating())) ? 'text-yellow-500' : 'text-gray-300'
                   }`}>
                     ★
                   </span>
