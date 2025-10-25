@@ -29,10 +29,7 @@ export default function ManageUsers() {
 
   const fetchUsers = async () => {
     try {
-      const { data: users, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data: users, error } = await supabase.rpc('get_all_users');
       
       if (error) {
         console.error("Error fetching users:", error);
