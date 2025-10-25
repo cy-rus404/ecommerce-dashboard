@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import AdminProtectedRoute from "../../../components/AdminProtectedRoute";
+
 import { AdminAuth } from "../../../lib/adminAuth";
 
 const supabase = createClient(
@@ -14,21 +14,24 @@ export default function ManageAdmins() {
   const [admins, setAdmins] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentAdmin, setCurrentAdmin] = useState<any>(null);
-  const [newAdmin, setNewAdmin] = useState({ email: "", name: "", role: "admin" });
+  const [newAdmin, setNewAdmin] = useState({ email: "", name: "", role: "admin", password: "" });
   const router = useRouter();
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { email } = AdminAuth.getCurrentSession();
-      if (email) {
-        const adminUser = await AdminAuth.getAdminUser(email);
-        setCurrentAdmin(adminUser);
-        if (adminUser?.role === 'super_admin') {
-          fetchAdmins();
-        } else {
-          alert("Only super admins can manage admin users");
-          router.push("/admin");
-        }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+      
+      // Check if user is admin
+      if (user.email === 'admin@ecommerce.com') {
+        setCurrentAdmin({ email: user.email, role: 'super_admin' });
+        fetchAdmins();
+      } else {
+        alert("Only admins can manage admin users");
+        router.push("/admin");
       }
     };
     checkAuth();
@@ -54,12 +57,29 @@ export default function ManageAdmins() {
   };
 
   const createAdmin = async () => {
-    if (!newAdmin.email || !newAdmin.name) {
+    if (!newAdmin.email || !newAdmin.name || !newAdmin.password) {
       alert("Please fill in all fields");
       return;
     }
 
+    if (newAdmin.password.length < 6) {
+      alert("Password must be at least 6 characters");
+      return;
+    }
+
     try {
+      // Create Supabase auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: newAdmin.email,
+        password: newAdmin.password
+      });
+
+      if (authError) {
+        alert("Error creating auth user: " + authError.message);
+        return;
+      }
+
+      // Add to admin_users table
       const { error } = await supabase
         .from('admin_users')
         .insert([{
@@ -73,12 +93,13 @@ export default function ManageAdmins() {
         console.error("Error creating admin:", error);
         alert("Error creating admin: " + error.message);
       } else {
-        console.log("Admin created successfully");
-        setNewAdmin({ email: "", name: "", role: "admin" });
+        alert(`Admin created successfully!\n\nCredentials:\nEmail: ${newAdmin.email}\nPassword: ${newAdmin.password}\n\nPlease share these credentials securely.`);
+        setNewAdmin({ email: "", name: "", role: "admin", password: "" });
         fetchAdmins();
       }
     } catch (error) {
       console.error("Error creating admin:", error);
+      alert("Error creating admin. Please try again.");
     }
   };
 
@@ -99,10 +120,34 @@ export default function ManageAdmins() {
     }
   };
 
+  const deleteAdmin = async (adminId: number, adminEmail: string) => {
+    if (!confirm(`Are you sure you want to permanently delete admin: ${adminEmail}?`)) {
+      return;
+    }
+
+    try {
+      // Delete from admin_users table
+      const { error } = await supabase
+        .from('admin_users')
+        .delete()
+        .eq('id', adminId);
+
+      if (error) {
+        console.error("Error deleting admin:", error);
+        alert("Error deleting admin: " + error.message);
+      } else {
+        alert("Admin deleted successfully");
+        fetchAdmins();
+      }
+    } catch (error) {
+      console.error("Error deleting admin:", error);
+      alert("Error deleting admin. Please try again.");
+    }
+  };
+
   if (loading) return <div className="p-8">Loading...</div>;
 
   return (
-    <AdminProtectedRoute>
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
         <nav className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -154,16 +199,24 @@ export default function ManageAdmins() {
                         </div>
                         <div className="flex space-x-2">
                           {admin.email !== currentAdmin?.email && (
-                            <button
-                              onClick={() => toggleAdminStatus(admin.id, admin.is_active)}
-                              className={`px-3 py-1 rounded text-xs font-medium ${
-                                admin.is_active
-                                  ? 'bg-red-600 text-white hover:bg-red-700'
-                                  : 'bg-green-600 text-white hover:bg-green-700'
-                              }`}
-                            >
-                              {admin.is_active ? 'Deactivate' : 'Activate'}
-                            </button>
+                            <>
+                              <button
+                                onClick={() => toggleAdminStatus(admin.id, admin.is_active)}
+                                className={`px-3 py-1 rounded text-xs font-medium ${
+                                  admin.is_active
+                                    ? 'bg-yellow-600 text-white hover:bg-yellow-700'
+                                    : 'bg-green-600 text-white hover:bg-green-700'
+                                }`}
+                              >
+                                {admin.is_active ? 'Deactivate' : 'Activate'}
+                              </button>
+                              <button
+                                onClick={() => deleteAdmin(admin.id, admin.email)}
+                                className="px-3 py-1 rounded text-xs font-medium bg-red-600 text-white hover:bg-red-700"
+                              >
+                                Delete
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -197,6 +250,14 @@ export default function ManageAdmins() {
                   onChange={(e) => setNewAdmin({ ...newAdmin, name: e.target.value })}
                   className="w-full p-3 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 />
+                <input
+                  type="password"
+                  placeholder="Password (min 6 characters)"
+                  value={newAdmin.password}
+                  onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
+                  className="w-full p-3 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  minLength={6}
+                />
                 <select
                   value={newAdmin.role}
                   onChange={(e) => setNewAdmin({ ...newAdmin, role: e.target.value })}
@@ -219,6 +280,5 @@ export default function ManageAdmins() {
           </div>
         </main>
       </div>
-    </AdminProtectedRoute>
   );
 }

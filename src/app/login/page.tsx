@@ -1,10 +1,7 @@
 "use client";
 import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-
 import { useRouter } from "next/navigation";
-import { AdminAuth } from "../../lib/adminAuth";
-import { DemoAuth } from "../../lib/demoAuth";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
@@ -62,27 +59,23 @@ export default function LoginPage() {
         setError('Login failed. Please try again later.');
       }
     } else {
-      // Check if user is demo user
+      // Check if user is in admin_users table
       try {
-        const isDemoUser = await DemoAuth.isDemoUser(email);
-        if (isDemoUser) {
-          console.log('Demo user detected, redirecting to demo dashboard');
-          router.push("/demo/dashboard");
-        } else if (email === 'admin@ecommerce.com') {
-          console.log('Admin user detected, redirecting to admin dashboard');
-          router.push("/admin");
-        } else {
-          // Regular user
-          console.log('Regular user, redirecting to products');
-          router.push("/products");
-        }
-      } catch (error) {
-        console.log('Demo check failed, treating as regular user');
-        if (email === 'admin@ecommerce.com') {
+        const { data: adminUser } = await supabase
+          .from('admin_users')
+          .select('role, is_active')
+          .eq('email', email)
+          .eq('is_active', true)
+          .single();
+        
+        if (adminUser) {
           router.push("/admin");
         } else {
           router.push("/products");
         }
+      } catch {
+        // Not an admin, go to products
+        router.push("/products");
       }
     }
     setLoading(false);
@@ -93,20 +86,7 @@ export default function LoginPage() {
     router.push("/signup");
   };
 
-  // Handle demo login
-  const handleDemoLogin = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await DemoAuth.loginDemoUser();
-      router.push("/demo/dashboard");
-    } catch (err: any) {
-      setError("Demo user not set up yet. Please create demo user in Supabase first.");
-    }
-    
-    setLoading(false);
-  };
+
 
 
 
@@ -211,24 +191,7 @@ export default function LoginPage() {
             </button>
           </div>
           
-          {/* Demo button */}
-          <div className="mt-4">
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              disabled={loading}
-              className="w-full bg-orange-500 text-white py-2 sm:py-3 rounded-lg hover:bg-orange-600 transition text-sm sm:text-base disabled:opacity-50 flex items-center justify-center"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Loading Demo...
-                </>
-              ) : (
-                "🔄 Try Demo"
-              )}
-            </button>
-          </div>
+
         </form>
 
 

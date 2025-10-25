@@ -4,7 +4,7 @@ import { logger } from "../../../lib/logger";
 import { VALIDATION_LIMITS } from "../../../lib/constants";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import { DemoAuth } from "../../../lib/demoAuth";
+
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
@@ -101,24 +101,13 @@ export default function AddProduct() {
     setSuccess(false);
 
     try {
-      // Check if demo user - block real actions
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user && await DemoAuth.isDemoUser(user.email || '')) {
-          DemoAuth.showDemoNotification('Product creation blocked in demo mode');
-          setLoading(false);
-          return;
-        }
-      } catch (error) {
-        console.log('Demo check failed, proceeding with normal operation');
-      }
+
 
       let imageUrls: string[] = [];
       
       if (imageFiles.length > 0) {
         setUploading(true);
         imageUrls = await uploadImages(imageFiles);
-        console.log('Images uploaded successfully');
         setUploading(false);
       }
 

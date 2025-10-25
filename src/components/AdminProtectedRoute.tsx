@@ -17,7 +17,6 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
       const { token, email } = AdminAuth.getCurrentSession();
       
       if (!token || !email) {
-        console.log('No admin session found');
         setIsAuthenticated(false);
         router.push("/login");
         return;
@@ -26,7 +25,6 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
       // Validate session
       const isValidSession = await AdminAuth.validateSession(token);
       if (!isValidSession) {
-        console.log('Invalid admin session');
         setIsAuthenticated(false);
         router.push("/login");
         return;
@@ -35,7 +33,6 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
       // Check if user is still admin
       const isAdmin = await AdminAuth.isAdmin(email);
       if (!isAdmin) {
-        console.log('User is not admin');
         await AdminAuth.destroySession(token);
         setIsAuthenticated(false);
         router.push("/login");
@@ -45,7 +42,6 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
       // Get admin user details
       const adminUserData = await AdminAuth.getAdminUser(email);
       if (!adminUserData) {
-        console.log('Could not get admin user data');
         setIsAuthenticated(false);
         router.push("/login");
         return;

@@ -36,7 +36,6 @@ export class EmailService {
       // In a real app, you would integrate with an email service like:
       // - SendGrid, Mailgun, AWS SES, etc.
       // For now, we'll just log and store in database
-      console.log('Email sent:', notification);
       return true;
     } catch (error) {
       console.error('Error sending email:', error);
@@ -198,7 +197,6 @@ export class EmailService {
         await this.sendLowStockAlert(admin.email, lowStockProducts);
       }
 
-      console.log(`Low stock alerts sent for ${lowStockProducts.length} products`);
     } catch (error) {
       console.error('Error checking low stock:', error);
     }

@@ -505,7 +505,7 @@ export default function CheckoutPage() {
                   <div className="space-y-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Card Number (Demo: 4111111111111111)
+                        Card Number
                       </label>
                       <input
                         type="text"

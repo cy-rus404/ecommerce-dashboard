@@ -33,7 +33,6 @@ export default function AdminDashboard() {
   const fetchUserCount = async () => {
     try {
       setUserCount(1); // Test user only (admin not counted as regular user)
-      console.log('User count set to 1 (regular users only)');
     } catch (error) {
       console.error('Error setting user count:', error);
       setUserCount(0);
@@ -50,7 +49,6 @@ export default function AdminDashboard() {
         console.error('Error fetching product count:', error);
         setProductCount(0);
       } else {
-        console.log('Product count:', count);
         setProductCount(count || 0);
       }
     } catch (error) {
@@ -66,7 +64,6 @@ export default function AdminDashboard() {
         .select('*', { count: 'exact', head: true });
       
       if (error) {
-        console.log('Orders table not found, setting default values');
         setOrderCount(0);
         setTotalRevenue(0);
         return;
@@ -86,7 +83,6 @@ export default function AdminDashboard() {
         setTotalRevenue(0);
       }
     } catch (error) {
-      console.log('Error fetching order stats, using defaults');
       setOrderCount(0);
       setTotalRevenue(0);
     }

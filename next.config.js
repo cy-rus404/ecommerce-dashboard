@@ -48,8 +48,7 @@ const nextConfig = {
   // Compression
   compress: true,
   
-  // Production optimizations
-  swcMinify: true,
+  // Production optimizations (swcMinify is deprecated in Next.js 15)
   
   // Redirect HTTP to HTTPS in production
   async redirects() {

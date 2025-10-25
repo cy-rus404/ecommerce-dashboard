@@ -55,7 +55,6 @@ export default function Analytics() {
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'orders' },
         (payload) => {
-          console.log('Order change detected:', payload);
           fetchAnalytics(); // Refresh analytics when orders change
         }
       )
@@ -67,7 +66,6 @@ export default function Analytics() {
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'products' },
         (payload) => {
-          console.log('Product change detected:', payload);
           fetchAnalytics(); // Refresh analytics when products change
         }
       )
@@ -79,7 +77,6 @@ export default function Analytics() {
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'users' },
         (payload) => {
-          console.log('User change detected:', payload);
           fetchAnalytics(); // Refresh analytics when users change
         }
       )

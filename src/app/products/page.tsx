@@ -32,40 +32,15 @@ export default function ProductsPage() {
   }, [products, selectedCategory, searchQuery, priceRange, selectedSize, selectedColor, selectedGender, sortBy]);
 
   const checkAuth = async () => {
-    console.log('Products page: Checking auth...');
     
-    // Check if in trial mode first
-    const trialToken = localStorage.getItem('trial_token');
-    const trialSession = localStorage.getItem('trial_session');
-    
-    console.log('Trial token:', trialToken);
-    console.log('Trial session:', trialSession);
-    
-    if (trialToken) {
-      console.log('Products page: Trial mode detected, creating mock user');
-      const mockUser = {
-        id: 'trial-user',
-        email: 'trial@demo.com',
-        user_metadata: { name: 'Trial User' }
-      };
-      setUser(mockUser);
-      fetchProducts();
-      fetchCartCount('trial-user');
-      fetchWishlist('trial-user');
-      return;
-    }
 
-    console.log('Products page: No trial token, checking regular auth');
+
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
-      console.log('Regular auth user:', user);
-      console.log('Regular auth error:', error);
       
       if (!user) {
-        console.log('Products page: No user found, redirecting to login');
         router.push("/login");
       } else {
-        console.log('Products page: Regular user found, proceeding');
         setUser(user);
         fetchProducts();
         fetchCartCount(user.id);
@@ -233,14 +208,8 @@ export default function ProductsPage() {
   };
 
   const handleLogout = async () => {
-    const trialSession = localStorage.getItem('trial_session');
-    if (trialSession) {
-      localStorage.removeItem('trial_session');
-      router.push('/trial');
-    } else {
-      await supabase.auth.signOut();
-      router.push("/login");
-    }
+    await supabase.auth.signOut();
+    router.push("/login");
   };
 
   if (loading || !user) {

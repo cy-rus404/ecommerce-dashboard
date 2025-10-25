@@ -15,7 +15,6 @@ if (typeof window !== 'undefined') {
     emailjs.init({
       publicKey: 'FEIXpFEr5PuvhR_6g'
     });
-    console.log('EmailJS loaded and initialized');
   }).catch((error) => {
     console.error('EmailJS import error:', error);
   });
@@ -78,7 +77,6 @@ export default function OrderManagement() {
   };
 
   const updateOrderStatus = async (orderId: number, newStatus: string) => {
-    console.log('Updating order status:', orderId, 'to', newStatus);
     try {
       const { error } = await supabase
         .from('orders')
@@ -92,11 +90,9 @@ export default function OrderManagement() {
         console.error('Order update error:', error);
         alert("Error updating order status");
       } else {
-        console.log('Order status updated successfully');
         
         // Send email notification to customer
         const order = orders.find(o => o.id === orderId);
-        console.log('Found order for email:', order);
         
         if (order && order.customer_email) {
           try {
@@ -114,12 +110,10 @@ export default function OrderManagement() {
               order_id: orderId
             });
             
-            console.log('Email sent to:', order.customer_email);
           } catch (error) {
             console.error('Email notification error:', error);
           }
         } else {
-          console.log('No email found for order:', orderId);
         }
         
         fetchOrders();
@@ -244,7 +238,6 @@ export default function OrderManagement() {
                               order_id: '999'
                             });
                             alert('Test email sent successfully!');
-                            console.log('Test result:', result);
                           } catch (error) {
                             alert('Test email failed: ' + JSON.stringify(error));
                             console.error('Test error:', error);
@@ -477,17 +470,13 @@ export default function OrderManagement() {
                         const message = `Your order #${order.id} has been ${bulkStatus.toUpperCase()}. ${bulkStatus === 'shipped' ? 'Your order is on the way!' : bulkStatus === 'delivered' ? 'Delivered! Enjoy your purchase.' : 'We\'ll keep you updated.'}`;
                         
                         // Check if we have customer email
-                        console.log('Order data:', order);
-                        console.log('Customer email:', order.customer_email);
                         
                         if (!order.customer_email) {
                           failCount++;
-                          console.log('No email for order:', order.id);
                           continue;
                         }
                         
                         try {
-                          console.log('Attempting to send email to:', order.customer_email);
                           
                           if (!emailjs) {
                             // Try to load EmailJS if not loaded
@@ -499,11 +488,6 @@ export default function OrderManagement() {
                           }
                           
                           // Test with minimal data first
-                          console.log('Testing EmailJS with:', {
-                            service: 'service_ls40okk',
-                            template: 'template_9enxem8',
-                            email: order.customer_email
-                          });
                           
                           const result = await emailjs.send(
                             'service_ls40okk',
@@ -515,7 +499,6 @@ export default function OrderManagement() {
                             }
                           );
                           
-                          console.log('EmailJS success:', result);
                           successCount++;
                           
                         } catch (error) {

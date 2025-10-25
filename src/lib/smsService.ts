@@ -164,7 +164,6 @@ export class SMSService {
       const defaultPhone = '+233505719507';
       await this.sendLowStockAlert(defaultPhone, lowStockProducts);
 
-      console.log('Low stock SMS alerts processed successfully');
     } catch (error) {
       console.error('Low stock check failed');
       alert('Error sending alerts. Please try again.');

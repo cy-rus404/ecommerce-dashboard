@@ -45,7 +45,6 @@ export default function ViewProducts() {
         console.error("Error fetching products:", error);
         setProducts([]);
       } else {
-        console.log("Products fetched:", data);
         setProducts(data || []);
       }
     } catch (error) {
@@ -67,11 +66,9 @@ export default function ViewProducts() {
         console.error("Error updating stock:", error);
         alert("Error updating stock");
       } else {
-        console.log("Stock updated successfully");
         
         // Check if stock is low and send alert
         if (newStock <= 5) {
-          console.log('Low stock detected, checking for alerts...');
           EmailService.checkAndSendLowStockAlerts();
         }
         
@@ -95,7 +92,6 @@ export default function ViewProducts() {
         console.error("Error deleting product:", error);
         alert("Error deleting product");
       } else {
-        console.log("Product deleted successfully");
         fetchProducts();
       }
     } catch (error) {
@@ -127,7 +123,6 @@ export default function ViewProducts() {
         console.error("Error updating discount:", error);
         alert("Error updating discount");
       } else {
-        console.log("Discount updated successfully");
         setEditingDiscount(null);
         fetchProducts();
       }
@@ -151,7 +146,6 @@ export default function ViewProducts() {
         console.error("Error removing discount:", error);
         alert("Error removing discount");
       } else {
-        console.log("Discount removed successfully");
         fetchProducts();
       }
     } catch (error) {
