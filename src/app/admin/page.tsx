@@ -32,18 +32,14 @@ export default function AdminDashboard() {
 
   const fetchUserCount = async () => {
     try {
-      const { count, error } = await supabase
-        .from('auth.users')
-        .select('*', { count: 'exact', head: true });
+      // Use RPC function to get user count
+      const { data, error } = await supabase.rpc('get_user_count');
       
       if (error) {
-        // Fallback: try counting from a users table if it exists
-        const { count: userTableCount } = await supabase
-          .from('users')
-          .select('*', { count: 'exact', head: true });
-        setUserCount(userTableCount || 0);
+        console.error('Error fetching user count:', error);
+        setUserCount(0);
       } else {
-        setUserCount(count || 0);
+        setUserCount(data || 0);
       }
     } catch (error) {
       console.error('Error fetching user count:', error);
