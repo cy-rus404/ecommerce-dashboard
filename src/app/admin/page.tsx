@@ -32,9 +32,21 @@ export default function AdminDashboard() {
 
   const fetchUserCount = async () => {
     try {
-      setUserCount(1); // Test user only (admin not counted as regular user)
+      const { count, error } = await supabase
+        .from('auth.users')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) {
+        // Fallback: try counting from a users table if it exists
+        const { count: userTableCount } = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true });
+        setUserCount(userTableCount || 0);
+      } else {
+        setUserCount(count || 0);
+      }
     } catch (error) {
-      console.error('Error setting user count:', error);
+      console.error('Error fetching user count:', error);
       setUserCount(0);
     }
   };
