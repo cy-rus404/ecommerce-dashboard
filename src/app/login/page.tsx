@@ -50,7 +50,19 @@ export default function LoginPage() {
     if (error) {
       console.error('Authentication failed');
       if (error.message?.includes('Invalid login credentials')) {
-        setError('Invalid email or password. Please check your credentials and try again.');
+        // Check if user exists but is banned or deleted
+        try {
+          const { data: userStatus } = await supabase.rpc('check_user_status', { user_email: email });
+          if (userStatus === 'banned') {
+            setError('🚫 Your account has been banned by an administrator. Please contact support.');
+          } else if (userStatus === 'deleted') {
+            setError('❌ This account does not exist. Please check your email or create a new account.');
+          } else {
+            setError('Invalid email or password. Please check your credentials and try again.');
+          }
+        } catch {
+          setError('Invalid email or password. Please check your credentials and try again.');
+        }
       } else if (error.message?.includes('Email not confirmed')) {
         setError('Please check your email and click the confirmation link before signing in.');
       } else if (error.message?.includes('Too many requests')) {

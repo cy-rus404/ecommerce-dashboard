@@ -46,19 +46,17 @@ export default function ManageUsers() {
   };
 
   const deleteUser = async (userId: string) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+    if (!confirm("Are you sure you want to permanently delete this user? They will not be able to login anymore.")) return;
     
     try {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId);
+      const { error } = await supabase.rpc('delete_user_completely', { user_id: userId });
       
       if (error) {
-        console.error("Supabase delete error:", error);
+        console.error("Error deleting user:", error);
         alert("Error deleting user: " + error.message);
       } else {
-        setUsers(users.filter(user => user.id !== userId));
+        alert("User deleted successfully. They can no longer login.");
+        fetchUsers();
       }
     } catch (error) {
       console.error("Error deleting user:", error);
@@ -68,17 +66,17 @@ export default function ManageUsers() {
 
   const toggleUserStatus = async (userId: string, banned: boolean) => {
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ 
-          banned_until: banned ? null : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-        })
-        .eq('id', userId);
+      const action = banned ? 'unban' : 'ban';
+      const { error } = await supabase.rpc('toggle_user_ban', { 
+        user_id: userId, 
+        ban_user: !banned 
+      });
       
       if (error) {
-        console.error("Supabase update error:", error);
+        console.error("Error updating user status:", error);
         alert("Error updating user status: " + error.message);
       } else {
+        alert(`User ${action}ned successfully. ${!banned ? 'They cannot login until unbanned.' : 'They can now login normally.'}`);
         fetchUsers();
       }
     } catch (error) {
